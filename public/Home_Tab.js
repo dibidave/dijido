@@ -32,6 +32,8 @@ function Home_Tab(tab_header_div, tab_content_div, connector) {
   this.new_action_button = document.createElement("button");
   this.new_action_button.className = "btn btn-primary ml-auto";
   this.new_action_button.innerHTML = "New Action";
+  this.new_action_button.addEventListener(
+    "click", this.new_action_clicked.bind(this));
   this.current_action_id_row.appendChild(this.new_action_button);
 
   this.current_action_div.appendChild(this.current_action_id_row);
@@ -310,6 +312,8 @@ Home_Tab.prototype.update_actions_table = function() {
     action_button.className = "btn btn-outline-primary btn-lg btn-block";
     action_button.setAttribute("width", "100%");
     action_button.innerHTML = action.name;
+    // Allow text wrapping
+    action_button.style["white-space"] = "normal";
     action_button.addEventListener(
       "click", this.action_clicked.bind(this, action._id));
 
@@ -328,4 +332,14 @@ Home_Tab.prototype.action_clicked = function(action_id) {
 
   $("#current_action_status_select").val(
     current_action.status_id).trigger("change");
+};
+
+Home_Tab.prototype.new_action_clicked = function() {
+
+  this.current_action_id = null;
+  this.current_action_id_field.value = "";
+  this.current_action_name_field.value = "";
+
+  $("#current_action_status_select").val(
+    this.statuses[0]._id).trigger("change");
 };

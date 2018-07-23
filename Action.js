@@ -1,52 +1,17 @@
-
-var database = require("./connectors/database");
+var Database_Object = require("dijible-lib/Database_Object");
+var database = require("dijible-lib/connectors/database");
 
 const collection_name = "Actions";
 
 const Action = {
 
-  save() {
-
-    var self = this;
-
-    var promise = null;
-
-    if(this._id === undefined) {
-      promise = database.insert(collection_name, this.to_JSON())
-      .then(function(sample_id) {
-        self._id = sample_id;
-        return self;
-      });
-    }
-    else {
-      promise = database.update(collection_name, this._id, this.to_JSON())
-      .then(function() {
-        return self;
-      });
-    }
-
-    return promise;
-  },
-
-  to_JSON() {
-    return {
-      "_id": this._id,
-      "name": this.name,
-      "status_id": this.status_id
-    };
-  },
-
-  from_JSON(JSON_object) {
-    this._id = JSON_object._id;
-    this.name = JSON_object.name;
-    this.status_id = JSON_object.status_id;
-  }
-
 };
 
-exports.create_action = function(action_JSON) {
+exports.create_action = function(user_id, action_JSON) {
 
-  var action = Object.create(Action);
+  var action = Database_Object.create_database_object(user_id, collection_name);
+  Object.assign(action, Action);
+
   action.name = action_JSON.name;
   action.status_id = action_JSON.status_id;
 
@@ -58,15 +23,16 @@ exports.create_action = function(action_JSON) {
   return promise;
 };
 
-exports.get_action_by_id = function(action_id) {
+exports.get_action_by_id = function(user_id, action_id) {
 
-  var promise = database.get_objects(collection_name,
-  {
-    _id: action_id
-  }).then(function(results) {
+  var promise = database.get_object_by_id(user_id, collection_name, action_id)
+  .then(function(action_JSON) {
 
-    var action = Object.create(Action);
-    action.from_JSON(results[0]);
+    var action = Database_Object.create_database_object(
+      user_id, collection_name);
+    Object.assign(action, Action);
+
+    action.from_JSON(action_JSON);
 
     return action;
   });
@@ -74,9 +40,9 @@ exports.get_action_by_id = function(action_id) {
   return promise;
 };
 
-exports.get_actions = function() {
+exports.get_actions = function(user_id) {
 
-  var promise = database.get_objects(collection_name)
+  var promise = database.get_objects(user_id, collection_name)
   .then(function(results) {
 
     var actions = [];
@@ -84,7 +50,9 @@ exports.get_actions = function() {
     for(var action_index = 0; action_index < results.length;
       action_index++) {
 
-      var action = Object.create(Action);
+      var action = Database_Object.create_database_object(
+        user_id, collection_name);
+      Object.assign(action, Action);
       action.from_JSON(results[action_index]);
 
       actions.push(action);

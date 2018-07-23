@@ -1,8 +1,8 @@
 var express = require("express");
 var router = express.Router();
-var database = require("./connectors/database");
+var database = require("dijible-lib/connectors/database");
 var dateformat = require('dateformat');
-var logger = require("./util/logger").get_logger("routes");
+var logger = require("dijible-lib/util/logger").get_logger("routes");
 var path = require("path");
 var Action = require("./Action");
 var Status = require("./Status");
@@ -13,7 +13,7 @@ var get_home_page = function(request, response, next) {
 
 var post_action = function(request, response) {
 
-  Action.create_action(request.body)
+  Action.create_action(null, request.body)
   .then(function(action) {
     return response.json({action: action});
   });
@@ -21,7 +21,7 @@ var post_action = function(request, response) {
 
 var get_actions = function(request, response) {
 
-  Action.get_actions()
+  Action.get_actions(null)
   .then(function(actions) {
 
     var action_JSON_objects = [];
@@ -40,7 +40,7 @@ var get_actions = function(request, response) {
 
 var get_statuses = function(request, response) {
 
-  Status.get_statuses()
+  Status.get_statuses(null)
   .then(function(statuses) {
 
     var status_JSON_objects = [];
@@ -62,7 +62,7 @@ var update_action = function(request, response) {
   var action_id = request.params._id;
   var updated_action = request.body;
 
-  Action.get_action_by_id(action_id)
+  Action.get_action_by_id(null, action_id)
   .then(function(action) {
     action.from_JSON(updated_action);
     return action.save();
