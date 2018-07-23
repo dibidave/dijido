@@ -1,0 +1,36 @@
+{
+  "name": "dijido",
+  "version": "1.0.0",
+  "description": "Personal objective tracking app server",
+  "main": "bin/server.js",
+  "bin": {
+    "dijido": "server.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "bunyan": "^1.8.12",
+    "cookie-parser": "^1.4.3",
+    "dateformat": "^3.0.3",
+    "express": "^4.16.3",
+    "flatpickr": "^4.5.1",
+    "http": "0.0.0",
+    "moment": "^2.21.0",
+    "mongodb": "^3.0.5",
+    "sendmail": "^1.4.1",
+    "shelljs": "^0.8.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/dibidave/dijido.git"
+  },
+  "author": "David Brown",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dibidave/dijido/issues"
+  },
+  "homepage": "https://github.com/dibidave/dijido#readme"
+}
