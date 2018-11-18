@@ -216,6 +216,10 @@ Home_Tab.prototype.update_statuses = function() {
 
       let status = this.statuses[status_index];
 
+      let date_range = Util.get_date_range_for_status(status);
+
+      console.log(date_range);
+
       this.status_id_map[status._id] = status;
     }
 
@@ -309,7 +313,7 @@ Home_Tab.prototype.save_clicked = function() {
 
     this.connector.post_goal(new_goal)
     .then(function(new_goal) {
-      this.current_goal_id = new_goal._id;
+      this.new_goal_clicked();
       return this.update_goals();
     }.bind(this));
   }
@@ -344,17 +348,7 @@ Home_Tab.prototype.cancel_delete_clicked = function() {
   // If the current goal id is null, we are creating a new goal
   if(this.current_goal_id === null) {
 
-    let new_goal = {};
-    new_goal.name = this.current_goal_name_field.value;
-    new_goal.status_id = selected_status._id;
-    new_goal.target_date = this.target_date_picker.selectedDates[0];
-    new_goal.due_date = this.due_date_picker.selectedDates[0];
-
-    this.connector.post_goal(new_goal)
-    .then(function(new_goal) {
-      this.current_goal_id = new_goal._id;
-      return this.update_goals();
-    }.bind(this));
+    return this.new_goal_clicked();
   }
   else {
 
@@ -364,8 +358,9 @@ Home_Tab.prototype.cancel_delete_clicked = function() {
     current_goal.target_date = this.target_date_picker.selectedDates[0];
     current_goal.due_date = this.due_date_picker.selectedDates[0];
 
-    this.connector.put_goal(current_goal._id, current_goal)
+    this.connector.delete_goal(current_goal._id)
     .then(function() {
+      this.new_goal_clicked();
       return this.update_goals();
     }.bind(this));
   }
@@ -386,9 +381,11 @@ Home_Tab.prototype.update_goals_table = function() {
   this.goals_table_row = document.createElement("div");
   this.goals_table_row.className = "row justify-content-center";
 
-  this.status_divs = {};
+  this.status_divs_by_id = {};
 
   let selected_status_ids = $("#active_statuses_select").val();
+
+  // let selected_statuses = 
 
   for(var status_index = 0; status_index < selected_status_ids.length;
     status_index++) {
@@ -404,7 +401,7 @@ Home_Tab.prototype.update_goals_table = function() {
 
     status_div.appendChild(header_label);
 
-    this.status_divs[status._id] = status_div;
+    this.status_divs_by_id[status._id] = status_div;
 
     this.goals_table_row.appendChild(status_div);
   }
@@ -414,11 +411,11 @@ Home_Tab.prototype.update_goals_table = function() {
 
     let goal = this.goals[goal_index];
 
-    if(!(goal.status_id in this.status_divs)) {
+    if(!(goal.status_id in this.status_divs_by_id)) {
       continue;
     }
 
-    let status_div = this.status_divs[goal.status_id];
+    let status_div = this.status_divs_by_id[goal.status_id];
 
     let goal_button = document.createElement("button");
     goal_button.className = "btn btn-outline-primary btn-lg btn-block";
@@ -441,6 +438,7 @@ Home_Tab.prototype.goal_clicked = function(goal_id) {
   let current_goal = this.goal_id_map[goal_id];
   this.current_goal_id_field.value = goal_id;
   this.current_goal_name_field.value = current_goal.name;
+  this.cancel_delete_button.innerHTML = "Delete";
 
   $("#current_goal_status_select").val(
     current_goal.status_id).trigger("change");
@@ -473,4 +471,8 @@ Home_Tab.prototype.new_goal_clicked = function() {
 
   this.target_date_picker.setDate(null);
   this.due_date_picker.setDate(null);
+
+  this.cancel_delete_button.innerHTML = "Cancel";
+
+  $("#parent_goals_select").empty().trigger("change");
 };

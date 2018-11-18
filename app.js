@@ -14,6 +14,19 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use("/", routes);
 app.use("/external/flatpickr",
   express.static(path.join(__dirname, "node_modules", "flatpickr", "dist")));
+app.use("/external/moment",
+  express.static(path.join(__dirname, "node_modules", "moment", "min")));
+app.use("/external/select2",
+  express.static(path.join(__dirname, "node_modules", "select2", "dist")));
+app.use("/external/bootswatch",
+  express.static(path.join(__dirname, "node_modules", "bootswatch", "dist")));
+app.use("/external/bootstrap",
+  express.static(path.join(__dirname, "node_modules", "bootstrap", "dist")));
+app.use("/external/jquery",
+  express.static(path.join(__dirname, "node_modules", "jquery", "dist")));
+app.use("/external/popper.js",
+  express.static(path.join(__dirname, "node_modules", "popper.js", "dist",
+    "umd")));
 
 app.use(function(req, res, next) {
   var err = new Error("Not Found");

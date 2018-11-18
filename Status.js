@@ -12,6 +12,27 @@ exports.create_status = function(status_JSON) {
   Object.assign(status, Status);
   status.name = status_JSON.name;
 
+  if(status_JSON.hasOwnProperty("time_unit")) {
+    status.time_unit = status_JSON.time_unit;
+  }
+  else {
+    status.time_unit = null;
+  }
+
+  if(status_JSON.hasOwnProperty("min_time")) {
+    status.min_time = status_JSON.min_time;
+  }
+  else {
+    status.min_time = null;
+  }
+
+  if(status_JSON.hasOwnProperty("max_time")) {
+    status.max_time = status_JSON.max_time;
+  }
+  else {
+    status.max_time = null;
+  }
+
   var promise = status.save()
   .then(function() {
     return status;

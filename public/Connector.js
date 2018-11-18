@@ -42,6 +42,24 @@ function post_URL(URL, data) {
   return promise;
 };
 
+function delete_URL(URL) {
+
+  var promise = new Promise(function(resolve, reject) {
+    $.ajax({
+      type: 'delete',
+      url: URL,
+      error: function(jqXHR, status, error) {
+        return reject(error);
+      },
+      success: function(response) {
+        return resolve(response);
+      }
+    });
+  });
+
+  return promise;
+};
+
 function put_URL(URL, data) {
 
   var data_JSON = JSON.stringify(data);
@@ -109,3 +127,15 @@ Connector.prototype.put_goal = function(goal_id, goal) {
 
   return promise;
 };
+
+Connector.prototype.delete_goal = function(goal_id) {
+
+  var URL = this.base_URL + "/goals/" + goal_id;
+
+  var promise = delete_URL(URL)
+  .then(function(response) {
+    return response;
+  });
+
+  return promise;
+}

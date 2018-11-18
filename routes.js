@@ -19,6 +19,14 @@ var post_goal = function(request, response) {
   });
 };
 
+var post_status = function(request, response) {
+
+  Status.create_status(request.body)
+  .then(function(status) {
+    return response.json({status: status});
+  });
+};
+
 var get_goals = function(request, response) {
 
   var filter = {};
@@ -82,10 +90,24 @@ var update_goal = function(request, response) {
   });
 };
 
+var delete_goal = function(request, response) {
+
+  var goal_id = request.params._id;
+
+  Goal.get_goal_by_id(goal_id)
+  .then(function(goal) {
+    return goal.delete();
+  }).then(function(goal) {
+    return response.json({});
+  });
+};
+
 router.get("/", get_home_page);
 router.post("/goals", post_goal);
 router.get("/goals", get_goals);
 router.get("/statuses", get_statuses);
+router.post("/statuses", post_status);
 router.put("/goals/:_id", update_goal);
+router.delete("/goals/:_id", delete_goal);
 
 module.exports = router;
