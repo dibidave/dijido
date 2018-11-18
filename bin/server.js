@@ -1,7 +1,7 @@
 var http = require("http");
-var logger = require("dijible-lib/util/logger").init_logger("server");
+var logger = require("sqit/logging/Logger").init_logger("server");
 var app = require("../app");
-var database = require("dijible-lib/connectors/database");
+var database = require("sqit/database/database");
 var config = require("../config/config");
 
 port = config.port;

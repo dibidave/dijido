@@ -65,23 +65,23 @@ function put_URL(URL, data) {
   return promise;
 };
 
-Connector.prototype.get_actions = function() {
-  var URL = this.base_URL + "/actions";
+Connector.prototype.get_goals = function() {
+  var URL = this.base_URL + "/goals";
 
   var promise = get_URL(URL)
     .then(function(response) {
-      return response.actions;
+      return response.goals;
     });
 
   return promise;
 };
 
-Connector.prototype.post_action = function(action) {
-  var URL = this.base_URL + "/actions";
+Connector.prototype.post_goal = function(goal) {
+  var URL = this.base_URL + "/goals";
 
-  var promise = post_URL(URL, action)
+  var promise = post_URL(URL, goal)
     .then(function(response) {
-      return response;
+      return response.goal;
     });
 
   return promise;
@@ -98,11 +98,11 @@ Connector.prototype.get_statuses = function() {
   return promise;
 };
 
-Connector.prototype.put_action = function(action_id, action) {
+Connector.prototype.put_goal = function(goal_id, goal) {
 
-  var URL = this.base_URL + "/actions/" + action_id;
+  var URL = this.base_URL + "/goals/" + goal_id;
 
-  var promise = put_URL(URL, action)
+  var promise = put_URL(URL, goal)
   .then(function(response) {
     return response;
   });

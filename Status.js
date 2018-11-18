@@ -1,14 +1,14 @@
-var Database_Object = require("dijible-lib/Database_Object");
-var database = require("dijible-lib/connectors/database");
+var Database_Object = require("sqit/database/Database_Object");
+var database = require("sqit/database/database");
 
 const collection_name = "Statuses";
 
 const Status = {
 };
 
-exports.create_status = function(user_id, status_JSON) {
+exports.create_status = function(status_JSON) {
 
-  var status = Database_Object.create_database_object(user_id, collection_name);
+  var status = Database_Object.create_database_object(collection_name);
   Object.assign(status, Status);
   status.name = status_JSON.name;
 
@@ -22,7 +22,7 @@ exports.create_status = function(user_id, status_JSON) {
 
 exports.get_statuses = function(user_id) {
 
-  var promise = database.get_objects(user_id, collection_name)
+  var promise = database.get_objects(collection_name)
   .then(function(results) {
 
     var statuses = [];
@@ -30,8 +30,7 @@ exports.get_statuses = function(user_id) {
     for(var status_index = 0; status_index < results.length;
       status_index++) {
 
-      var status = Database_Object.create_database_object(
-        user_id, collection_name);
+      var status = Database_Object.create_database_object(collection_name);
       Object.assign(status, Status);
       status.from_JSON(results[status_index]);
 
