@@ -4,6 +4,7 @@ var logger = require("sqit/logging/Logger").init_logger("server");
 var app = require("../app");
 var database = require("sqit/database/database");
 var config = require("../config/config");
+var fs = require("fs");
 
 port = config.port;
 var key_file_path = config.key_file_path;
