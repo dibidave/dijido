@@ -17,6 +17,14 @@ const Goal = {
     if(this.due_date !== null) {
       this.due_date = new Date(this.due_date);
     }
+
+    if(this.completed_on !== null) {
+      this.completed_on = new Date(this.completed_on);
+    }
+
+    if(this.abandoned_on !== null) {
+      this.abandoned_on = new Date(this.abandoned_on);
+    }
   }
 
 };
@@ -30,7 +38,13 @@ exports.create_goal = function(goal_JSON) {
   goal.status_id = goal_JSON.status_id;
 
   if(goal_JSON.hasOwnProperty("target_date")) {
-    goal.target_date = new Date(goal_JSON.target_date);
+
+    if(goal_JSON.target_date === null) {
+      goal.target_date = null;
+    }
+    else {
+      goal.target_date = new Date(goal_JSON.target_date);
+    }
   }
   else {
     goal.target_date = null;
@@ -41,6 +55,32 @@ exports.create_goal = function(goal_JSON) {
   }
   else {
     goal.due_date = null;
+  }
+
+  if(goal_JSON.hasOwnProperty("completed_on")) {
+
+    if(goal_JSON.completed_on === null) {
+      goal.completed_on = null;
+    }
+    else {
+      goal.completed_on = new Date(goal_JSON.completed_on);
+    }
+  }
+  else {
+    goal.completed_on = null;
+  }
+
+  if(goal_JSON.hasOwnProperty("abandoned_on")) {
+
+    if(goal_JSON.abandoned_on === null) {
+      goal.abandoned_on = null;
+    }
+    else {
+      goal.abandoned_on = new Date(goal_JSON.abandoned_on);
+    }
+  }
+  else {
+    goal.abandoned_on = null;
   }
 
   if(goal_JSON.hasOwnProperty("parent_goal_ids")) {
