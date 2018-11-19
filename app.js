@@ -3,15 +3,53 @@ var routes = require("./routes");
 var cookie_parser = require("cookie-parser");
 var body_parser = require("body-parser");
 var path = require("path");
+var config = require("./config/config")
+var passport = require("passport");
+var Passport_Strategy = require("passport-local").Strategy;
+var User = require("sqit/authentication/User");
+var express_session = require("express-session");
+var logger = require("sqit/logging/Logger").get_logger("app");
 
 var app = express();
+
+app.use(express_session({
+  secret: config.express_secret
+}));
+
+passport.use(new Passport_Strategy(
+  function(username, password, callback) {
+
+    User.get_user_by_credentials(username, password)
+    .then(function(user) {
+      if(user === null) {
+        return callback(null);
+      }
+      else {
+        return callback(null, user);
+      }
+    });
+  })
+);
+
+passport.serializeUser(function(user, callback) {
+  callback(null, user._id);
+});
+
+passport.deserializeUser(function(user_id, callback) {
+  User.get_user_by_id(user_id)
+  .then(function(user) {
+    callback(null, user);
+  });
+});
 
 app.use(cookie_parser());
 app.use(body_parser.json());
 app.use(body_parser.urlencoded({ extended: false }));
-app.use(express.static(path.join(__dirname, 'public')));
 
-app.use("/", routes);
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.use(express.static(path.join(__dirname, "public")));
 app.use("/external/flatpickr",
   express.static(path.join(__dirname, "node_modules", "flatpickr", "dist")));
 app.use("/external/moment",
@@ -27,11 +65,24 @@ app.use("/external/jquery",
 app.use("/external/popper.js",
   express.static(path.join(__dirname, "node_modules", "popper.js", "dist",
     "umd")));
+  
+app.post("/login", 
+  passport.authenticate("local", { failureRedirect: "/" }),
+  function(req, res) {
+    res.redirect("/");
+});
+
+app.get("/logout",
+  function(req, res){
+    req.logout();
+    res.redirect('/');
+});
+
+app.use("/", routes);
 
 app.use(function(req, res, next) {
-  var err = new Error("Not Found");
-  err.status = 404;
-  next(err);
+  logger.info("Attempted to access invalid URL, '" + req.url + "'");
+  res.status(404).send("Not Found");
 });
 
 module.exports = app;

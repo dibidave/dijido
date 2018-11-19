@@ -24,6 +24,7 @@
     <script src="/external/flatpickr/flatpickr.min.js"></script>
     <script src="/external/moment/moment.min.js"></script>
 
+    <script src="Login_Pane.js" type="text/javascript"></script>
     <script src="Tab_Header.js" type="text/javascript"></script>
     <script src="Connector.js" type="text/javascript"></script>
     <script src="Main_Frame.js" type="text/javascript"></script>
@@ -51,8 +52,16 @@
         container.className = "container-fluid";
         document.body.appendChild(container);
 
-        frame = new Main_Frame(container, connector);
-        
+        var session = '<%= Session %>';
+        connector.get_session()
+        .then(function(session) {
+          if(session.passport !== undefined && session.passport.user !== undefined) {
+            frame = new Main_Frame(container, connector);
+          }
+          else {
+            frame = new Login_Pane(container, connector);
+          }
+        });        
       }
     </script>
   </header>

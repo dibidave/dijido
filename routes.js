@@ -7,6 +7,17 @@ var path = require("path");
 var Goal = require("./Goal");
 var Status = require("./Status");
 
+var is_authenticated = function(request, response, next) {
+
+  if(request.isAuthenticated()) {
+    return next();
+  }
+  else {
+    logger.warn("OMG Y U ACCESS THIS, CLICKY THE BUTTONS");
+    response.redirect("/");
+  }
+};
+
 var get_home_page = function(request, response, next) {
   response.render("index", { title: "Express" });
 };
@@ -102,12 +113,20 @@ var delete_goal = function(request, response) {
   });
 };
 
-router.get("/", get_home_page);
-router.post("/goals", post_goal);
-router.get("/goals", get_goals);
-router.get("/statuses", get_statuses);
-router.post("/statuses", post_status);
-router.put("/goals/:_id", update_goal);
-router.delete("/goals/:_id", delete_goal);
+var get_session = function(request, response) {
+
+  return response.json({
+    session: request.session
+  });
+};
+
+router.get("/", is_authenticated, get_home_page);
+router.post("/goals", is_authenticated, post_goal);
+router.get("/goals", is_authenticated, get_goals);
+router.get("/statuses", is_authenticated, get_statuses);
+router.post("/statuses", is_authenticated, post_status);
+router.put("/goals/:_id", is_authenticated, update_goal);
+router.delete("/goals/:_id", is_authenticated, delete_goal);
+router.get("/session", get_session);
 
 module.exports = router;

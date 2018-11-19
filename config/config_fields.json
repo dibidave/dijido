@@ -7,5 +7,29 @@
       "validate":"(function validateNumberMinMax(str) {if ( !isNaN(str) ){ if (parseFloat(str)>=100 &&parseFloat(str)<=99999 )return true; } return false;  })"
     },
     "description": "The port on which to host the dijido web server"
+  },
+  {
+    "key": "express_secret",
+    "value": "barbecue oligarchy fish train",
+    "description": "String express uses to encrypt"
+  },
+  {
+    "key": "insecure_port",
+    "value": 8080,
+    "inquirer_options":{
+      "type":"input",
+      "validate":"(function validateNumberMinMax(str) {if ( !isNaN(str) ){ if (parseFloat(str)>=100 &&parseFloat(str)<=99999 )return true; } return false;  })"
+    },
+    "description": "The port on which to listen to non-secure connections"
+  },
+  {
+    "key": "key_file_path",
+    "value": "",
+    "description": "The path to the private key file (for SSL)"
+  },
+  {
+    "key": "certificate_file_path",
+    "value": "",
+    "description": "The path to the certificate file (for SSL)"
   }
 ]
