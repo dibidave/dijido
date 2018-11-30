@@ -303,7 +303,7 @@ function Home_Tab(tab_header_div, tab_content_div, connector) {
   this.tab_content.appendChild(this.grid_header_row);
 
   this.goals_table_div = document.createElement("div");
-  this.goals_table_div.className = "col-sm-12";
+  this.goals_table_div.className = "col-sm-12 pt-4";
   this.tab_content.appendChild(this.goals_table_div);
 
   this.tab_content_div.appendChild(this.tab_content);
@@ -439,6 +439,8 @@ Home_Tab.prototype.update_goals = function() {
   return this.connector.get_goals()
   .then(function(goals) {
 
+    let old_filter_goal_ids = this.filter_goal_ids;
+
     $("#parent_goals_select").empty().trigger("change");
     $("#parent_goal_filter_select").empty().trigger("change");
 
@@ -469,14 +471,13 @@ Home_Tab.prototype.update_goals = function() {
         .trigger("change");
     }
 
-    let old_filter_goal_ids = this.filter_goal_ids;
     this.filter_goal_ids = [];
 
     for(var goal_index = 0; goal_index < old_filter_goal_ids.length;
       goal_index++) {
 
       if(old_filter_goal_ids[goal_index] in this.goal_id_map) {
-        this.filter_goal_ids.append(old_filter_goal_ids[goal_index]);
+        this.filter_goal_ids.push(old_filter_goal_ids[goal_index]);
       }
     }
 
@@ -672,11 +673,25 @@ Home_Tab.prototype.update_goals_table = function() {
     var status_div = document.createElement("div");
     status_div.className = "col-sm-2 justify-content-center";
 
+    let header_row = document.createElement("div");
+    header_row.className = "row justify-content-center";
+
     let header_label = document.createElement("h5");
     header_label.innerHTML = status.name;
     header_label.align = "center";
+    header_label.verticalAlign = "middle";
 
-    status_div.appendChild(header_label);
+    header_row.appendChild(header_label);
+    let header_move_to_button = document.createElement("button");
+    header_move_to_button.className = "btn btn-secondary btn-sm";
+    header_move_to_button.innerHTML = "&#11022"
+    header_move_to_button.verticalAlign = "middle";
+    header_move_to_button.addEventListener(
+      "click", this.move_to_status_clicked.bind(this, status._id));
+
+    header_row.appendChild(header_move_to_button);
+
+    status_div.appendChild(header_row);
 
     this.status_divs_by_id[status._id] = status_div;
 
@@ -907,6 +922,8 @@ Home_Tab.prototype.parent_filters_changed = function() {
 
   this.filter_goal_ids = $("#parent_goal_filter_select").val();
 
+  console.log(this.filter_goal_ids);
+
   this.update_goals_table();
 };
 
@@ -936,4 +953,17 @@ Home_Tab.prototype.abandon_clicked = function() {
   .then(function() {
     return this.new_goal_clicked();
   }.bind(this));
+};
+
+Home_Tab.prototype.move_to_status_clicked = function(status_id) {
+
+  if(this.current_goal_id === null) {
+    return;
+  }
+
+  $("#current_goal_status_select").val(status_id).trigger("change");
+
+  this.target_date_picker.setDate(null);
+
+  return this.save_clicked();
 };
