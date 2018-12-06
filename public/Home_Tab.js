@@ -795,7 +795,7 @@ Home_Tab.prototype.goal_clicked = function(goal_id) {
   
   this.current_goal_id = goal_id;
   let current_goal = this.goal_id_map[goal_id];
-  this.current_goal_id_field.value = goal_id;
+  // this.current_goal_id_field.value = goal_id;
   this.current_goal_name_field.value = current_goal.name;
   this.cancel_delete_button.innerHTML = "Delete";
 
@@ -849,7 +849,7 @@ Home_Tab.prototype.new_goal_clicked = function() {
   }
 
   this.current_goal_id = null;
-  this.current_goal_id_field.value = "";
+  // this.current_goal_id_field.value = "";
   this.current_goal_name_field.value = "";
 
   this.new_subgoal_button.classList.add("invisible");
