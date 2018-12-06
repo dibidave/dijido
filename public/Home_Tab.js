@@ -13,21 +13,26 @@ function Home_Tab(tab_header_div, tab_content_div, connector) {
   this.grid_header_row.className = "row";
 
   this.current_goal_div = document.createElement("div");
-  this.current_goal_div.className = "col-sm-6";
+  this.current_goal_div.className = "col-sm-6  border";
 
   // The current goal id field
   this.current_goal_id_row = document.createElement("div");
-  this.current_goal_id_row.className = "pt-3 pb-1 row";
+  this.current_goal_id_row.className = "pt-1 pb-1 row";
 
-  this.current_goal_id_label = document.createElement("label");
-  this.current_goal_id_label.className = "label label-default col-sm-3";
-  this.current_goal_id_label.innerHTML = "Goal Id";
-  this.current_goal_id_row.appendChild(this.current_goal_id_label);
+  this.current_goal_header = document.createElement("h3");
+  this.current_goal_header.innerHTML = "Current Goal";
 
-  this.current_goal_id_field = document.createElement("input");
-  this.current_goal_id_field.className = "col-sm-4";
-  this.current_goal_id_field.setAttribute("readonly","readonly");
-  this.current_goal_id_row.appendChild(this.current_goal_id_field);
+  this.current_goal_id_row.appendChild(this.current_goal_header);
+
+  // this.current_goal_id_label = document.createElement("label");
+  // this.current_goal_id_label.className = "label label-default col-sm-3";
+  // this.current_goal_id_label.innerHTML = "Goal Id";
+  // this.current_goal_id_row.appendChild(this.current_goal_id_label);
+
+  // this.current_goal_id_field = document.createElement("input");
+  // this.current_goal_id_field.className = "col-sm-4";
+  // this.current_goal_id_field.setAttribute("readonly","readonly");
+  // this.current_goal_id_row.appendChild(this.current_goal_id_field);
 
   this.new_goal_button = document.createElement("button");
   this.new_goal_button.className = "btn btn-primary mx-auto float-right";
@@ -215,7 +220,14 @@ function Home_Tab(tab_header_div, tab_content_div, connector) {
   this.grid_header_row.appendChild(this.current_goal_div);
 
   this.grid_filter_div = document.createElement("div");
-  this.grid_filter_div.className = "col-sm-6";
+  this.grid_filter_div.className = "col-sm-6 border";
+
+  this.grid_filter_div_header = document.createElement("h3");
+  this.grid_filter_div_header.className = "pt-1";
+  this.grid_filter_div_header.innerHTML = "Filters";
+
+  this.grid_filter_div.appendChild(this.grid_filter_div_header);
+
 
   this.active_statuses_row = document.createElement("div");
   this.active_statuses_row.className = "row justify-content-center";
@@ -280,6 +292,7 @@ function Home_Tab(tab_header_div, tab_content_div, connector) {
   this.parent_goal_recursive_checkbox.id = "parent_goal_recursive_checkbox";
   this.parent_goal_recursive_checkbox.className = "form-check-input";
   this.parent_goal_recursive_checkbox.setAttribute("type", "checkbox");
+  this.parent_goal_recursive_checkbox.checked = true;
   this.parent_goal_recursive_checkbox.addEventListener("click",
     this.parent_filters_changed.bind(this));
 
@@ -303,7 +316,7 @@ function Home_Tab(tab_header_div, tab_content_div, connector) {
   this.tab_content.appendChild(this.grid_header_row);
 
   this.goals_table_div = document.createElement("div");
-  this.goals_table_div.className = "col-sm-12 pt-4";
+  this.goals_table_div.className = "col-sm-12 pt-2";
   this.tab_content.appendChild(this.goals_table_div);
 
   this.tab_content_div.appendChild(this.tab_content);
@@ -674,7 +687,7 @@ Home_Tab.prototype.update_goals_table = function() {
     status_div.className = "col-sm-2 justify-content-center";
 
     let header_row = document.createElement("div");
-    header_row.className = "row justify-content-center";
+    header_row.className = "row justify-content-center mb-2";
 
     let header_label = document.createElement("h5");
     header_label.innerHTML = status.name;
@@ -881,7 +894,14 @@ Home_Tab.prototype.is_goal_in_filter = function(goal) {
   }
 
   if(this.filter_goal_ids.length < 1) {
-    return true;
+    if(this.parent_goal_recursive_checkbox.checked) {
+      return true;
+    }
+    else {
+      if(goal.parent_goal_ids.length === 0) {
+        return true;
+      }
+    }
   }
 
   var is_in_filter = false;
