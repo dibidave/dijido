@@ -215,6 +215,14 @@ function Home_Tab(tab_header_div, tab_content_div, connector) {
 
   this.current_goal_buttons_row.appendChild(this.cancel_delete_button);
 
+  this.set_active_button = document.createElement("button");
+  this.set_active_button.className = "btn btn-primary";
+  this.set_active_button.innerHTML = "Make Active";
+  this.set_active_button.addEventListener(
+    "click", this.set_active_clicked.bind(this));
+
+  this.current_goal_buttons_row.appendChild(this.set_active_button);
+
   this.current_goal_div.appendChild(this.current_goal_buttons_row);
 
   this.grid_header_row.appendChild(this.current_goal_div);
@@ -459,6 +467,7 @@ Home_Tab.prototype.update_goals = function() {
 
     this.goals = goals;
     this.goal_id_map = {};
+    this.active_goal_ids = [];
 
     for(var goal_index = 0; goal_index < this.goals.length;
       goal_index++) {
@@ -466,6 +475,10 @@ Home_Tab.prototype.update_goals = function() {
       let goal = this.goals[goal_index];
 
       this.goal_id_map[goal._id] = goal;
+
+      if(goal.is_active) {
+        this.active_goal_ids.push(goal._id);
+      }
 
       if(goal.completed_on !== null || goal.abandoned_on !== null) {
         continue;
@@ -527,6 +540,21 @@ Home_Tab.prototype.update_status_dropdown = function() {
 };
 
 Home_Tab.prototype.save_clicked = function() {
+
+  // Check whether this is a newly created goal; if it is, we'll clear the
+  // fields once saved
+  var is_new_goal = this.current_goal_id === null;
+
+  return this.save_current()
+  .then(function() {
+
+    if (is_new_goal) {
+      return this.new_goal_clicked();
+    }
+  });
+};
+
+Home_Tab.prototype.save_current = function() {
 
   if(this.current_goal_name_field.value.length === 0) {
     alert("Must specify a name for an goal");
@@ -598,7 +626,6 @@ Home_Tab.prototype.save_clicked = function() {
 
     return this.connector.post_goal(new_goal)
     .then(function(new_goal) {
-      this.new_goal_clicked();
       return this.update_goals();
     }.bind(this));
   }
@@ -636,6 +663,56 @@ Home_Tab.prototype.cancel_delete_clicked = function() {
       return this.update_goals();
     }.bind(this));
   }
+
+};
+
+Home_Tab.prototype.set_active_clicked = function() {
+
+  var promise = Promise.resolve();
+
+  // If the current goal id is null, save it and make it active
+  if(this.current_goal_id === null) {
+    promise = promise.then(this.save_current.bind(this));
+  }
+
+  promise = promise.then(function() {
+
+    if (this.current_goal_id === null) {
+      return Promise.resolve();
+    }
+
+    let current_goal = this.goal_id_map[this.current_goal_id];
+
+    if(current_goal.is_active) {
+
+      current_goal.is_active = false;
+      return this.connector.put_goal(current_goal._id, current_goal);
+    }
+
+    var update_promises = [];
+
+    for(var goal_index = 0; goal_index < this.active_goal_ids.length;
+      goal_index++) {
+
+      let active_goal = this.goal_id_map[this.active_goal_ids[goal_index]];
+
+      active_goal.is_active = false;
+
+      update_promises.push(this.connector.put_goal(active_goal._id,
+        active_goal));
+    }
+
+    current_goal.is_active = true;
+
+    update_promises.push(this.connector.put_goal(current_goal._id,
+      current_goal));
+
+    return Promise.all(update_promises);
+
+  }.bind(this))
+  .then(this.update_goals.bind(this));
+
+  return promise;
 
 };
 
@@ -764,6 +841,9 @@ Home_Tab.prototype.update_goals_table = function() {
       goal_button.className = "btn btn-outline-primary btn-lg btn-block active";
       goal_button.setAttribute("aria-pressed", true);
     }
+    else if(goal.is_active) {
+      goal_button.className = "btn btn-success btn-lg btn-block";
+    }
 
     goal_button.setAttribute("width", "100%");
     goal_button.innerHTML = goal.name;
@@ -785,8 +865,17 @@ Home_Tab.prototype.goal_clicked = function(goal_id) {
   if(this.current_goal_id !== null) {
 
     if(this.current_goal_id in this.goal_buttons_by_id) {
+  
+      let current_goal = this.goal_id_map[this.current_goal_id];
       let goal_button = this.goal_buttons_by_id[this.current_goal_id];
-      goal_button.className = "btn btn-outline-primary btn-lg btn-block";
+
+      if(current_goal.is_active) {
+        goal_button.className = "btn btn-success btn-lg btn-block";
+      }
+      else {
+        goal_button.className = "btn btn-outline-primary btn-lg btn-block";
+      }
+
       goal_button.setAttribute("aria-pressed", false);
     }
   }
@@ -830,6 +919,13 @@ Home_Tab.prototype.goal_clicked = function(goal_id) {
     this.abandoned_date_picker.setDate(current_goal.abandoned_on);
   }
 
+  if(current_goal.is_active) {
+    this.set_active_button.innerHTML = "Make Inactive";
+  }
+  else {
+    this.set_active_button.innerHTML = "Make Active";
+  }
+
   $("#parent_goals_select").val(current_goal.parent_goal_ids).trigger("change");
 
   let goal_button = this.goal_buttons_by_id[goal_id];
@@ -861,6 +957,7 @@ Home_Tab.prototype.new_goal_clicked = function() {
   this.completed_date_picker.setDate(null);
 
   this.cancel_delete_button.innerHTML = "Cancel";
+  this.set_active_button.innerHTML = "Make active";
 
   $("#parent_goals_select").val(null).trigger("change");
 };
@@ -911,10 +1008,6 @@ Home_Tab.prototype.is_goal_in_filter = function(goal) {
 
     let filter_goal = this.goal_id_map[this.filter_goal_ids[goal_index]];
 
-    if(goal._id === filter_goal._id) {
-      return true;
-    }
-
     if(goal.parent_goal_ids.includes(filter_goal._id)) {
       return true;
     }
@@ -941,8 +1034,6 @@ Home_Tab.prototype.is_goal_in_filter = function(goal) {
 Home_Tab.prototype.parent_filters_changed = function() {
 
   this.filter_goal_ids = $("#parent_goal_filter_select").val();
-
-  console.log(this.filter_goal_ids);
 
   this.update_goals_table();
 };

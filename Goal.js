@@ -90,6 +90,13 @@ exports.create_goal = function(goal_JSON) {
     goal.parent_goal_ids = [];
   }
 
+  if(goal_JSON.hasOwnProperty("is_active")) {
+    goal.is_active = goal_JSON.is_active;
+  }
+  else {
+    goal.is_active = false;
+  }
+
   var promise = goal.save()
   .then(function() {
     return goal;
@@ -137,3 +144,5 @@ exports.get_goals = function(filter) {
 
   return promise;
 };
+
+exports.collection_name = collection_name;
