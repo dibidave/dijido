@@ -24,16 +24,6 @@ function Home_Tab(tab_header_div, tab_content_div, connector) {
 
   this.current_goal_id_row.appendChild(this.current_goal_header);
 
-  // this.current_goal_id_label = document.createElement("label");
-  // this.current_goal_id_label.className = "label label-default col-sm-3";
-  // this.current_goal_id_label.innerHTML = "Goal Id";
-  // this.current_goal_id_row.appendChild(this.current_goal_id_label);
-
-  // this.current_goal_id_field = document.createElement("input");
-  // this.current_goal_id_field.className = "col-sm-4";
-  // this.current_goal_id_field.setAttribute("readonly","readonly");
-  // this.current_goal_id_row.appendChild(this.current_goal_id_field);
-
   this.new_goal_button = document.createElement("button");
   this.new_goal_button.className = "btn btn-primary mx-auto float-right";
   this.new_goal_button.innerHTML = "New Goal";
@@ -335,6 +325,35 @@ function Home_Tab(tab_header_div, tab_content_div, connector) {
 
   this.grid_filter_div.appendChild(this.parent_goal_filter_options_row);
 
+  // Additional options box
+  this.additional_filter_options_row = document.createElement("div");
+  this.additional_filter_options_row.className = "row justify-content-center";
+
+  this.hide_non_leaf_div = document.createElement("div");
+  this.hide_non_leaf_div.className = "form-check";
+
+  this.hide_non_leaf_checkbox = document.createElement("input");
+  this.hide_non_leaf_checkbox.id = "hide_non_leaf_checkbox";
+  this.hide_non_leaf_checkbox.className = "form-check-input";
+  this.hide_non_leaf_checkbox.setAttribute("type", "checkbox");
+  this.hide_non_leaf_checkbox.checked = false;
+  this.hide_non_leaf_checkbox.addEventListener("click",
+    this.parent_filters_changed.bind(this));
+
+  this.hide_non_leaf_div.appendChild(this.hide_non_leaf_checkbox);
+
+  this.hide_non_leaf_label = document.createElement("label");
+  this.hide_non_leaf_label.innerHTML = "Hide Non-Leaf Nodes";
+  this.hide_non_leaf_label.className = "form-check-label text-nowrap";
+  this.hide_non_leaf_label.setAttribute("for", "hide_non_leaf_checkbox");
+
+  this.hide_non_leaf_div.appendChild(this.hide_non_leaf_label);
+
+  this.additional_filter_options_row.appendChild(this.hide_non_leaf_div);
+
+  this.grid_filter_div.appendChild(this.additional_filter_options_row);
+
+  // Add the filter dive to the page header
   this.grid_header_row.appendChild(this.grid_filter_div);
 
   this.tab_content.appendChild(this.grid_header_row);
@@ -484,11 +503,19 @@ Home_Tab.prototype.update_goals = function() {
     this.goals = goals;
     this.goal_id_map = {};
     this.active_goal_ids = [];
+    this.parent_goal_id_set = {};
 
     for(var goal_index = 0; goal_index < this.goals.length;
       goal_index++) {
 
       let goal = this.goals[goal_index];
+
+      for(let parent_goal_index = 0;
+        parent_goal_index < goal.parent_goal_ids.length;
+        parent_goal_index++) {
+
+        this.parent_goal_id_set[goal.parent_goal_ids[parent_goal_index]] = 1;
+      }
 
       this.goal_id_map[goal._id] = goal;
 
@@ -1036,6 +1063,12 @@ Home_Tab.prototype.is_goal_in_filter = function(goal) {
 
   if(goal.completed_on !== null || goal.abandoned_on !== null) {
     return false;
+  }
+
+  if(this.hide_non_leaf_checkbox.checked) {
+    if(goal._id in this.parent_goal_id_set) {
+      return false;
+    }
   }
 
   if(this.filter_goal_ids.length < 1) {
