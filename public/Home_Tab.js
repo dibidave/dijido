@@ -1059,13 +1059,17 @@ Home_Tab.prototype.go_up_clicked = function() {
   }
 };
 
-Home_Tab.prototype.is_goal_in_filter = function(goal) {
+Home_Tab.prototype.is_goal_in_filter = function(goal, ignore_depth) {
+
+  if(ignore_depth === undefined) {
+    ignore_depth = false;
+  }
 
   if(goal.completed_on !== null || goal.abandoned_on !== null) {
     return false;
   }
 
-  if(this.hide_non_leaf_checkbox.checked) {
+  if(ignore_depth === false && this.hide_non_leaf_checkbox.checked) {
     if(goal._id in this.parent_goal_id_set) {
       return false;
     }
@@ -1102,7 +1106,7 @@ Home_Tab.prototype.is_goal_in_filter = function(goal) {
         if(parent_goal_id in this.goal_id_map) {
           let parent_goal = this.goal_id_map[parent_goal_id];
           is_in_filter = 
-            is_in_filter || this.is_goal_in_filter(parent_goal);
+            is_in_filter || this.is_goal_in_filter(parent_goal, true);
         }
       }
     }
