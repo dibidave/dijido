@@ -274,20 +274,36 @@ function Home_Tab(tab_header_div, tab_content_div, connector) {
   this.parent_goal_filter_options_row = document.createElement("div");
   this.parent_goal_filter_options_row.className = "row justify-content-center";
 
-  this.parent_goal_filter_button_column = document.createElement("div");
-  this.parent_goal_filter_button_column.className = "col col-md-auto";
+  this.filter_by_current_button_column = document.createElement("div");
+  this.filter_by_current_button_column.className = "col col-md-auto";
 
-  this.parent_goal_filter_button = document.createElement("button");
-  this.parent_goal_filter_button.className = "btn btn-secondary";
-  this.parent_goal_filter_button.innerHTML = "Filter by Current";
+  this.filter_by_current_button = document.createElement("button");
+  this.filter_by_current_button.className = "btn btn-secondary";
+  this.filter_by_current_button.innerHTML = "Filter by Current";
 
-  this.parent_goal_filter_button.addEventListener("click",
+  this.filter_by_current_button.addEventListener("click",
     this.filter_by_current_clicked.bind(this));
 
-  this.parent_goal_filter_button_column
-    .appendChild(this.parent_goal_filter_button);
+  this.filter_by_current_button_column
+    .appendChild(this.filter_by_current_button);
 
-  this.parent_goal_filter_options_row.appendChild(this.parent_goal_filter_button_column);
+  this.parent_goal_filter_options_row.appendChild(this.filter_by_current_button_column);
+
+  this.go_up_button_column = document.createElement("div");
+  this.go_up_button_column.className = "col col-md-auto";
+
+  this.go_up_button = document.createElement("button");
+  this.go_up_button.className = "btn btn-secondary";
+  this.go_up_button.innerHTML = "Go Up";
+
+  this.go_up_button.addEventListener("click",
+    this.go_up_clicked.bind(this));
+
+  this.filter_by_current_button_column
+    .appendChild(this.go_up_button);
+
+  this.parent_goal_filter_options_row.appendChild(
+    this.go_up_button_column);
 
   this.spacer_div = document.createElement("div");
   this.spacer_div.className = "col-md-1";
@@ -979,6 +995,38 @@ Home_Tab.prototype.filter_by_current_clicked = function() {
   if(this.current_goal_id !== null) {
 
     this.filter_goal_ids = [this.current_goal_id];
+
+    $("#parent_goal_filter_select").val(this.filter_goal_ids).trigger("change");
+  }
+};
+
+Home_Tab.prototype.go_up_clicked = function() {
+
+  if(this.filter_goal_ids.length > 0) {
+
+    let parent_goals_union = [];
+
+    for(let filter_goal_index = 0;
+      filter_goal_index < this.filter_goal_ids.length;
+      filter_goal_index++) {
+
+      let filter_goal_id = this.filter_goal_ids[filter_goal_index]
+
+      let filter_goal = this.goal_id_map[filter_goal_id];
+
+      for(let parent_goal_index = 0;
+        parent_goal_index < filter_goal.parent_goal_ids.length;
+        parent_goal_index++) {
+
+        let parent_goal_id = filter_goal.parent_goal_ids[parent_goal_index];
+
+        if(!parent_goals_union.includes(parent_goal_id)) {
+          parent_goals_union.push(parent_goal_id);
+        }
+      }
+    }
+
+    this.filter_goal_ids = parent_goals_union;
 
     $("#parent_goal_filter_select").val(this.filter_goal_ids).trigger("change");
   }
