@@ -97,6 +97,22 @@ exports.create_goal = function(goal_JSON) {
     goal.is_active = false;
   }
 
+  if(goal_JSON.hasOwnProperty("recurrence_rate")) {
+
+    goal.recurrence_rate = goal_JSON.recurrence_rate;
+  }
+  else {
+    goal.recurrence_rate = null;
+  }
+
+  if(goal_JSON.hasOwnProperty("recurrence_time_unit")) {
+
+    goal.recurrence_time_unit = goal_JSON.recurrence_time_unit;
+  }
+  else {
+    goal.recurrence_time_unit = null;
+  }
+
   var promise = goal.save()
   .then(function() {
     return goal;

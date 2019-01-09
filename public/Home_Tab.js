@@ -92,25 +92,25 @@ function Home_Tab(tab_header_div, tab_content_div, connector) {
   this.target_date_row.appendChild(this.target_date_field);
   this.current_goal_div.appendChild(this.target_date_row);
   
-  this.due_date_row = document.createElement("div");
-  this.due_date_row.className = "pb-1 row";
+  // this.due_date_row = document.createElement("div");
+  // this.due_date_row.className = "pb-1 row";
 
-  this.due_date_label = document.createElement("label");
-  this.due_date_label.className = "label label-default col-sm-3";
-  this.due_date_label.innerHTML = "Due Date";
+  // this.due_date_label = document.createElement("label");
+  // this.due_date_label.className = "label label-default col-sm-3";
+  // this.due_date_label.innerHTML = "Due Date";
 
-  this.due_date_row.appendChild(this.due_date_label);
-  this.due_date_field = document.createElement("input");
-  this.due_date_field.className = "col-sm-6";
-  this.due_date_picker = flatpickr(this.due_date_field,
-    {
-      defaultDate: null,
-      disableMobile: true
-    }
-  );
+  // this.due_date_row.appendChild(this.due_date_label);
+  // this.due_date_field = document.createElement("input");
+  // this.due_date_field.className = "col-sm-6";
+  // this.due_date_picker = flatpickr(this.due_date_field,
+  //   {
+  //     defaultDate: null,
+  //     disableMobile: true
+  //   }
+  // );
 
-  this.due_date_row.appendChild(this.due_date_field);
-  this.current_goal_div.appendChild(this.due_date_row);
+  // this.due_date_row.appendChild(this.due_date_field);
+  // this.current_goal_div.appendChild(this.due_date_row);
   
   this.completed_date_row = document.createElement("div");
   this.completed_date_row.className = "pb-1 row d-none";
@@ -169,6 +169,28 @@ function Home_Tab(tab_header_div, tab_content_div, connector) {
 
   this.parent_goals_row.appendChild(this.parent_goals_dropdown);
   this.current_goal_div.appendChild(this.parent_goals_row);
+
+  this.recurrence_row = document.createElement("div");
+  this.recurrence_row.className = "row";
+
+  this.recurrence_label = document.createElement("label");
+  this.recurrence_label.className = "label label-default col-sm-3";
+  this.recurrence_label.innerHTML = "Recurrence";
+
+  this.recurrence_row.appendChild(this.recurrence_label);
+
+  this.recurrence_rate_field = document.createElement("input");
+  this.recurrence_rate_field.className = "col-sm-2";
+  this.recurrence_rate_field.type = "number";
+  this.recurrence_row.appendChild(this.recurrence_rate_field);
+
+  this.recurrence_time_unit_field = document.createElement("select");
+  this.recurrence_time_unit_field.className = "js-example-basic";
+  this.recurrence_time_unit_field.id = "recurrence_time_unit_select";
+
+  this.recurrence_row.appendChild(this.recurrence_time_unit_field);
+
+  this.current_goal_div.appendChild(this.recurrence_row);
 
   // Buttons for saving/canceling the current goal
   this.current_goal_buttons_row = document.createElement("div");
@@ -369,6 +391,7 @@ function Home_Tab(tab_header_div, tab_content_div, connector) {
   this.filter_goal_ids = [];
 
   this.update_statuses()
+  .then(this.update_recurrence_dropdown.bind(this))
   .then(this.update_goals.bind(this))
   .then(function() {
 
@@ -398,6 +421,13 @@ function Home_Tab(tab_header_div, tab_content_div, connector) {
       $("#parent_goal_filter_select").select2(
         {
           width: "50%"
+        }
+      );
+      $("#recurrence_time_unit_select").select2(
+        {
+          allowClear: true,
+          width: "25%",
+          placeholder: "Select time unit"
         }
       );
       $("#parent_goal_filter_select").on("change",
@@ -557,6 +587,26 @@ Home_Tab.prototype.update_goals = function() {
   }.bind(this));
 };
 
+Home_Tab.prototype.update_recurrence_dropdown = function() {
+
+  var recurrence_time_unit_names = {
+    "Day": "day",
+    "Week": "isoWeek",
+    "Month": "month",
+    "Year": "year"
+  };
+
+  for(var recurrence_time_unit_name in recurrence_time_unit_names) {
+
+    var option = new Option(recurrence_time_unit_name,
+      recurrence_time_unit_names[recurrence_time_unit_name], false, false);
+
+    $("#recurrence_time_unit_select").append(option).trigger("change");
+  }
+  
+  $("#recurrence_time_unit_select").val(null).trigger("change");
+};
+
 Home_Tab.prototype.update_status_dropdown = function() {
 
   default_status_ids = []
@@ -590,10 +640,12 @@ Home_Tab.prototype.save_clicked = function() {
 
   return this.save_current()
   .then(function() {
-
-    if (is_new_goal) {
+    if(is_new_goal) {
       return this.new_goal_clicked();
     }
+  }.bind(this)
+  ).catch(function() {
+    return;
   });
 };
 
@@ -601,7 +653,7 @@ Home_Tab.prototype.save_current = function() {
 
   if(this.current_goal_name_field.value.length === 0) {
     alert("Must specify a name for an goal");
-    return Promise.resolve();
+    return Promise.reject();
   }
 
   let selected_status_option =
@@ -635,13 +687,42 @@ Home_Tab.prototype.save_current = function() {
 
   if(selected_status_id === null && target_date === null) {
     alert("Must specify either a status or a target date");
-    return Promise.resolve();
+    return Promise.reject();
+  }
+
+  let recurrence_rate = this.recurrence_rate_field.value;
+
+  if(recurrence_rate === "") {
+    recurrence_rate = null;
+  }
+
+  if(recurrence_rate !== null) {
+    if(!isFinite(recurrence_rate) || recurrence_rate <= 0) {
+      console.log(recurrence_rate)
+      alert("Recurrence rate must be a number greater than 0!");
+      return Promise.reject();
+    }
+    recurrence_rate = parseInt(recurrence_rate);
+  }
+
+  let recurrence_time_unit_option =
+    $("#recurrence_time_unit_select").find(":selected");
+  let recurrence_time_unit = null;
+
+  if(recurrence_time_unit_option.length > 0) {
+    recurrence_time_unit = recurrence_time_unit_option[0].value;
+  }
+
+  if((recurrence_time_unit !== null && recurrence_rate === null) ||
+    (recurrence_time_unit === null && recurrence_rate !== null)) {
+      alert("Must specify both recurrence rate and time unit or neither");
+      return Promise.reject();
   }
 
   // TODO: allow it if they don't conflict
   if(selected_status_id !== null && target_date !== null) {
     alert("Can't specify both a target date and a status!");
-    return Promise.resolve();
+    return Promise.reject();
   }
 
   // Find the target date given this status
@@ -662,10 +743,13 @@ Home_Tab.prototype.save_current = function() {
     new_goal.name = this.current_goal_name_field.value;
     new_goal.status_id = selected_status_id;
     new_goal.target_date = target_date;
-    new_goal.due_date = this.due_date_picker.selectedDates[0];
+    // new_goal.due_date = this.due_date_picker.selectedDates[0];
+    new_goal.due_date = null;
     new_goal.parent_goal_ids = $("#parent_goals_select").val();
     new_goal.completed_on = completed_on;
     new_goal.abandoned_on = abandoned_on;
+    new_goal.recurrence_time_unit = recurrence_time_unit;
+    new_goal.recurrence_rate = recurrence_rate;
 
     return this.connector.post_goal(new_goal)
     .then(function(new_goal) {
@@ -678,10 +762,13 @@ Home_Tab.prototype.save_current = function() {
     current_goal.name = this.current_goal_name_field.value;
     current_goal.status_id = selected_status_id;
     current_goal.target_date = target_date;
-    current_goal.due_date = this.due_date_picker.selectedDates[0];
+    // current_goal.due_date = this.due_date_picker.selectedDates[0];
+    current_goal.due_date = null;
     current_goal.parent_goal_ids = $("#parent_goals_select").val();
     current_goal.completed_on = completed_on;
     current_goal.abandoned_on = abandoned_on;
+    current_goal.recurrence_time_unit = recurrence_time_unit;
+    current_goal.recurrence_rate = recurrence_rate;
 
     return this.connector.put_goal(current_goal._id, current_goal)
     .then(function() {
@@ -729,8 +816,11 @@ Home_Tab.prototype.set_active_clicked = function() {
     if(current_goal.is_active) {
 
       current_goal.is_active = false;
+      this.set_active_button.innerHTML = "Make Active";
       return this.connector.put_goal(current_goal._id, current_goal);
     }
+
+    this.set_active_button.innerHTML = "Make Inactive";
 
     var update_promises = [];
 
@@ -941,12 +1031,12 @@ Home_Tab.prototype.goal_clicked = function(goal_id) {
     this.target_date_picker.setDate(current_goal.target_date);
   }
 
-  if(current_goal.due_date === null) {
-    this.due_date_picker.setDate(null);
-  }
-  else {
-    this.due_date_picker.setDate(current_goal.due_date);
-  }
+  // if(current_goal.due_date === null) {
+  //   this.due_date_picker.setDate(null);
+  // }
+  // else {
+  //   this.due_date_picker.setDate(current_goal.due_date);
+  // }
 
   if(current_goal.completed_on === null) {
     this.completed_date_picker.setDate(null);
@@ -967,6 +1057,21 @@ Home_Tab.prototype.goal_clicked = function(goal_id) {
   }
   else {
     this.set_active_button.innerHTML = "Make Active";
+  }
+
+  if(current_goal.recurrence_rate === null) {
+    this.recurrence_rate_field.value = null;
+  }
+  else {
+    this.recurrence_rate_field.value = current_goal.recurrence_rate;
+  }
+
+  if(current_goal.recurrence_time_unit === null) {
+    $("#recurrence_time_unit_select").val(null).trigger("change");
+  }
+  else {
+    $("#recurrence_time_unit_select").val(current_goal.recurrence_time_unit)
+      .trigger("change");
   }
 
   $("#parent_goals_select").val(current_goal.parent_goal_ids).trigger("change");
@@ -996,7 +1101,7 @@ Home_Tab.prototype.new_goal_clicked = function() {
   $("#current_goal_status_select").val(null).trigger("change");
 
   this.target_date_picker.setDate(null);
-  this.due_date_picker.setDate(null);
+  // this.due_date_picker.setDate(null);
   this.completed_date_picker.setDate(null);
 
   this.cancel_delete_button.innerHTML = "Cancel";

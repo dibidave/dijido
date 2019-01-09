@@ -1,5 +1,5 @@
 function Connector(obj) {
-    this.base_URL = obj.base_URL;
+  this.base_URL = obj.base_URL;
 };
 
 function get_URL(URL) {
