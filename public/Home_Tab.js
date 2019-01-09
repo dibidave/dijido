@@ -1108,6 +1108,9 @@ Home_Tab.prototype.new_goal_clicked = function() {
   this.set_active_button.innerHTML = "Make active";
 
   $("#parent_goals_select").val(null).trigger("change");
+  this.recurrence_rate_field = null;
+
+  $("#recurrence_time_unit_select").val(null).trigger("change");
 };
 
 Home_Tab.prototype.new_subgoal_clicked = function() {
