@@ -139,7 +139,7 @@ exports.get_goal_by_id = function(goal_id) {
 
 exports.get_goals = function(filter) {
 
-  var promise = database.get_objects(collection_name, filter)
+  var promise = database.get_objects(collection_name, filter, {target_date: 1})
   .then(function(results) {
 
     var goals = [];

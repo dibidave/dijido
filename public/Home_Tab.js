@@ -85,7 +85,10 @@ function Home_Tab(tab_header_div, tab_content_div, connector) {
   this.target_date_picker = flatpickr(this.target_date_field,
     {
       defaultDate: null,
-      disableMobile: true
+      disableMobile: true,
+      enableTime: true,
+      defaultHour: 23,
+      defaultMinute: 59
     }
   );
 
@@ -189,6 +192,28 @@ function Home_Tab(tab_header_div, tab_content_div, connector) {
   this.recurrence_time_unit_field.id = "recurrence_time_unit_select";
 
   this.recurrence_row.appendChild(this.recurrence_time_unit_field);
+
+  this.recurrence_fixed_div = document.createElement("div");
+  this.recurrence_fixed_div.className = "form-check mx-auto my-auto";
+
+  this.recurrence_fixed_checkbox = document.createElement("input");
+  this.recurrence_fixed_checkbox.id = "recurrence_fixed_checkbox";
+  this.recurrence_fixed_checkbox.className = "form-check-input";
+  this.recurrence_fixed_checkbox.setAttribute("type", "checkbox");
+  this.recurrence_fixed_checkbox.checked = false;
+
+  this.recurrence_fixed_div
+    .appendChild(this.recurrence_fixed_checkbox);
+
+  this.recurrence_fixed_label = document.createElement("label");
+  this.recurrence_fixed_label.innerHTML = "Fixed";
+  this.recurrence_fixed_label.className = "form-check-label";
+  this.recurrence_fixed_label.setAttribute("for", "recurrence_fixed_checkbox");
+
+  this.recurrence_fixed_div
+    .appendChild(this.recurrence_fixed_label);
+
+  this.recurrence_row.appendChild(this.recurrence_fixed_div);
 
   this.current_goal_div.appendChild(this.recurrence_row);
 
@@ -592,7 +617,7 @@ Home_Tab.prototype.update_recurrence_dropdown = function() {
   var recurrence_time_unit_names = {
     "Hour": "hour",
     "Day": "day",
-    "Week": "isoWeek",
+    "Week": "week",
     "Month": "month",
     "Year": "year"
   };
@@ -699,7 +724,6 @@ Home_Tab.prototype.save_current = function() {
 
   if(recurrence_rate !== null) {
     if(!isFinite(recurrence_rate) || recurrence_rate <= 0) {
-      console.log(recurrence_rate)
       alert("Recurrence rate must be a number greater than 0!");
       return Promise.reject();
     }
@@ -718,6 +742,11 @@ Home_Tab.prototype.save_current = function() {
     (recurrence_time_unit === null && recurrence_rate !== null)) {
       alert("Must specify both recurrence rate and time unit or neither");
       return Promise.reject();
+  }
+
+  if(recurrence_time_unit === null && this.recurrence_fixed_checkbox.checked) {
+    alert("Fixed recurrence doesn't make sense if this task isn't recurring!");
+    return Promise.reject();
   }
 
   // TODO: allow it if they don't conflict
@@ -751,6 +780,7 @@ Home_Tab.prototype.save_current = function() {
     new_goal.abandoned_on = abandoned_on;
     new_goal.recurrence_time_unit = recurrence_time_unit;
     new_goal.recurrence_rate = recurrence_rate;
+    new_goal.is_recurrence_fixed = this.recurrence_fixed_checkbox.checked;
 
     return this.connector.post_goal(new_goal)
     .then(function(new_goal) {
@@ -770,6 +800,7 @@ Home_Tab.prototype.save_current = function() {
     current_goal.abandoned_on = abandoned_on;
     current_goal.recurrence_time_unit = recurrence_time_unit;
     current_goal.recurrence_rate = recurrence_rate;
+    current_goal.is_recurrence_fixed = this.recurrence_fixed_checkbox.checked;
 
     return this.connector.put_goal(current_goal._id, current_goal)
     .then(function() {
@@ -1076,6 +1107,8 @@ Home_Tab.prototype.goal_clicked = function(goal_id) {
   }
 
   $("#parent_goals_select").val(current_goal.parent_goal_ids).trigger("change");
+
+  this.recurrence_fixed_checkbox.checked = current_goal.is_recurrence_fixed;
 
   let goal_button = this.goal_buttons_by_id[goal_id];
   goal_button.className = "btn btn-outline-primary btn-lg btn-block active";

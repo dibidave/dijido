@@ -143,7 +143,20 @@ var update_goal = function(request, response) {
         new_goal_JSON.name = updated_goal.name;
         new_goal_JSON.parent_goal_ids = updated_goal.parent_goal_ids;
 
-        var target_date = moment(updated_goal.target_date);
+        var target_date = null;
+
+        if(parent_goal.is_recurrence_fixed) {
+          target_date = moment(updated_goal.target_date);
+        }
+        else {
+          if(updated_goal.completed_on !== null) {
+            target_date = moment(updated_goal.completed_on);
+          }
+          else {
+            target_date = moment(updated_goal.abandoned_on);
+          }
+        }
+        
 
         target_date.add(
           parent_goal.recurrence_rate, parent_goal.recurrence_time_unit);
