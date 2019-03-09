@@ -1,7 +1,7 @@
-function Main_Frame(parent_div, connector) {
+function Main_Frame(parent_div, datastore) {
 
   this.parent_div = parent_div;
-  this.connector = connector;
+  this.datastore = datastore;
 
   this.nav_bar = document.createElement("ul");
   this.nav_bar.className = "nav nav-tabs";
@@ -11,7 +11,7 @@ function Main_Frame(parent_div, connector) {
   this.tab_content.className = "tab-content";
 
   this.home_tab = new Home_Tab(this.nav_bar, this.tab_content,
-    this.connector);
+    this.datastore);
 
   this.logout_tab = document.createElement("li");
   this.logout_tab.className = "nav-item";

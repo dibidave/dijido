@@ -1,9 +1,9 @@
-function Home_Tab(tab_header_div, tab_content_div, connector) {
+function Home_Tab(tab_header_div, tab_content_div, datastore) {
 
   this.tab_header = Tab_Header("Home", "#home", tab_header_div, true);
 
   this.tab_content_div = tab_content_div;
-  this.connector = connector;
+  this.datastore = datastore;
 
   this.tab_content = document.createElement("div");
   this.tab_content.setAttribute("id", "home");
@@ -463,7 +463,7 @@ function Home_Tab(tab_header_div, tab_content_div, connector) {
 
 Home_Tab.prototype.update_statuses = function() {
 
-  var promise = this.connector.get_statuses()
+  var promise = this.datastore.get_statuses()
   .then(function(statuses) {
 
     this.unsorted_statuses = statuses;
@@ -547,13 +547,13 @@ Home_Tab.prototype.update_statuses = function() {
 
 Home_Tab.prototype.update_goals = function() {
 
-  return this.connector.get_goals()
+  return this.datastore.get_goals()
   .then(function(goals) {
 
     let old_filter_goal_ids = this.filter_goal_ids;
 
-    $("#parent_goals_select").empty().trigger("change");
-    $("#parent_goal_filter_select").empty().trigger("change");
+    $("#parent_goals_select").empty()
+    $("#parent_goal_filter_select").empty()
 
     this.goals = goals;
     this.goal_id_map = {};
@@ -583,16 +583,19 @@ Home_Tab.prototype.update_goals = function() {
       }
 
       let option = new Option(goal.name, goal._id, false, false);
-      $("#parent_goals_select").append(option).trigger("change");
+      $("#parent_goals_select").append(option)
 
       option = new Option(goal.name, goal._id, false, false);
-      $("#parent_goal_filter_select").append(option).trigger("change");
+      $("#parent_goal_filter_select").append(option)
     }
 
     if(this.current_goal_id !== null) {
       let current_goal = this.goal_id_map[this.current_goal_id];
       $("#parent_goals_select").val(current_goal.parent_goal_ids)
         .trigger("change");
+    }
+    else {
+      $("#parent_goals_select").val(null).trigger("change");
     }
 
     this.filter_goal_ids = [];
@@ -782,7 +785,7 @@ Home_Tab.prototype.save_current = function() {
     new_goal.recurrence_rate = recurrence_rate;
     new_goal.is_recurrence_fixed = this.recurrence_fixed_checkbox.checked;
 
-    return this.connector.post_goal(new_goal)
+    return this.datastore.add_goal(new_goal)
     .then(function(new_goal) {
       return this.update_goals();
     }.bind(this));
@@ -802,7 +805,7 @@ Home_Tab.prototype.save_current = function() {
     current_goal.recurrence_rate = recurrence_rate;
     current_goal.is_recurrence_fixed = this.recurrence_fixed_checkbox.checked;
 
-    return this.connector.put_goal(current_goal._id, current_goal)
+    return this.datastore.update_goal(current_goal._id, current_goal)
     .then(function() {
       return this.update_goals();
     }.bind(this));
@@ -819,7 +822,7 @@ Home_Tab.prototype.cancel_delete_clicked = function() {
 
     let current_goal = this.goal_id_map[this.current_goal_id];
 
-    this.connector.delete_goal(current_goal._id)
+    this.datastore.delete_goal(current_goal._id)
     .then(function() {
       this.new_goal_clicked();
       return this.update_goals();
@@ -849,7 +852,7 @@ Home_Tab.prototype.set_active_clicked = function() {
 
       current_goal.is_active = false;
       this.set_active_button.innerHTML = "Make Active";
-      return this.connector.put_goal(current_goal._id, current_goal);
+      return this.datastore.update_goal(current_goal._id, current_goal);
     }
 
     this.set_active_button.innerHTML = "Make Inactive";
@@ -863,13 +866,13 @@ Home_Tab.prototype.set_active_clicked = function() {
 
       active_goal.is_active = false;
 
-      update_promises.push(this.connector.put_goal(active_goal._id,
+      update_promises.push(this.datastore.update_goal(active_goal._id,
         active_goal));
     }
 
     current_goal.is_active = true;
 
-    update_promises.push(this.connector.put_goal(current_goal._id,
+    update_promises.push(this.datastore.update_goal(current_goal._id,
       current_goal));
 
     return Promise.all(update_promises);

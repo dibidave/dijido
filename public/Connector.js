@@ -84,6 +84,7 @@ function put_URL(URL, data) {
 };
 
 Connector.prototype.get_goals = function() {
+
   var URL = this.base_URL + "/goals";
 
   var promise = get_URL(URL)
@@ -92,6 +93,31 @@ Connector.prototype.get_goals = function() {
     });
 
   return promise;
+};
+
+Connector.prototype.get_incomplete_goals = function() {
+
+  var URL = this.base_URL + "/goals?completed_on=null";
+
+  var promise = get_URL(URL)
+    .then(function(response) {
+      return response.goals;
+    });
+
+  return promise;
+};
+
+Connector.prototype.get_goal = function(goal_id) {
+  
+  var URL = this.base_URL + "/goals/?_id=" + goal_id;
+
+  var promise = get_URL(URL)
+    .then(function(response) {
+      return response.goals[0];
+    });
+
+  return promise;
+
 };
 
 Connector.prototype.post_goal = function(goal) {

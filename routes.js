@@ -66,7 +66,13 @@ var get_goals = function(request, response) {
       continue;
     }
 
-    filter[parameter] = request.query[parameter];
+    var filter_value = request.query[parameter];
+
+    if(filter_value === "null") {
+      filter_value = null;
+    }
+
+    filter[parameter] = filter_value;
   }
 
   Goal.get_goals(filter)
