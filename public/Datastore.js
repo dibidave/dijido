@@ -9,12 +9,8 @@ var Datastore = function(connector) {
 
 Datastore.prototype.sync = function() {
 
-  console.log("Syncing");
-
   return this.connector.get_incomplete_goals()
   .then(function(server_goals) {
-
-    console.log("Got server goals");
 
     var new_goals = [];
     var new_goal_id_map = {};
@@ -69,9 +65,6 @@ Datastore.prototype.get_parent_goals = function() {
       goal_ids_to_fetch[parent_goal_id] = 1;
     }
   }
-
-  console.log("Fetching:");
-  console.log(goal_ids_to_fetch);
 
   if(Object.keys(goal_ids_to_fetch).length == 0) {
     return Promise.resolve();

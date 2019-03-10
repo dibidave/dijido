@@ -35,6 +35,7 @@ exports.create_goal = function(goal_JSON) {
   Object.assign(goal, Goal);
 
   goal.name = goal_JSON.name;
+  goal.notes = "";
   goal.status_id = goal_JSON.status_id;
 
   if(goal_JSON.hasOwnProperty("target_date")) {

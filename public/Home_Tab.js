@@ -260,6 +260,14 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
 
   this.current_goal_buttons_row.appendChild(this.set_active_button);
 
+  this.notes_button = document.createElement("button");
+  this.notes_button.className = "btn btn-primary";
+  this.notes_button.innerHTML = "Notes";
+  this.notes_button.addEventListener(
+    "click", this.notes_button_clicked.bind(this));
+
+  this.current_goal_buttons_row.appendChild(this.notes_button);
+
   this.current_goal_div.appendChild(this.current_goal_buttons_row);
 
   this.grid_header_row.appendChild(this.current_goal_div);
@@ -410,6 +418,66 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
   this.tab_content.appendChild(this.goals_table_div);
 
   this.tab_content_div.appendChild(this.tab_content);
+
+  this.notes_modal = document.createElement("div");
+  this.notes_modal.id = "notes_modal";
+  this.notes_modal.className = "modal fade";
+
+  this.notes_modal_dialog = document.createElement("div");
+  this.notes_modal_dialog.className = "modal-dialog";
+
+  this.notes_modal_content = document.createElement("div");
+  this.notes_modal_content.className = "modal-content";
+
+  this.notes_modal_header = document.createElement("div");
+  this.notes_modal_header.className = "modal-header";
+
+  this.notes_modal_header_text = document.createElement("h5");
+  this.notes_modal_header_text.className = "modal-title";
+  this.notes_modal_header_text.innerHTML = "Notes";
+  this.notes_modal_header.appendChild(this.notes_modal_header_text);
+
+  this.close_notes_button = document.createElement("button");
+  this.close_notes_button.className = "close";
+  this.close_notes_button.addEventListener(
+    "click", this.close_notes_button_clicked.bind(this));
+
+  this.close_notes_symbol = document.createElement("span");
+  this.close_notes_symbol.innerHTML = "&times";
+  this.close_notes_button.appendChild(this.close_notes_symbol);
+
+  this.notes_modal_header.appendChild(this.close_notes_button);
+
+  this.notes_modal_content.appendChild(this.notes_modal_header);
+
+  this.notes_modal_body = document.createElement("div");
+  this.notes_modal_body.className = "modal-body";
+  this.notes_modal_body.align = "center";
+
+  this.notes_field = document.createElement("textarea");
+  this.notes_field.className = "form-control py-3";
+  this.notes_field.align = "center";
+  this.notes_field.setAttribute("rows", 10);
+  this.notes_modal_body.appendChild(this.notes_field);
+
+  this.notes_modal_content.appendChild(this.notes_modal_body);
+
+  this.notes_modal_footer = document.createElement("div");
+  this.notes_modal_footer.className = "modal-footer";
+
+  this.save_notes_button = document.createElement("button");
+  this.save_notes_button.className = "btn btn-primary";
+  this.save_notes_button.innerHTML = "Save";
+  this.save_notes_button.addEventListener(
+    "click", this.save_notes_clicked.bind(this));
+
+  this.notes_modal_footer.appendChild(this.save_notes_button);
+
+  this.notes_modal_content.appendChild(this.notes_modal_footer);
+  this.notes_modal_dialog.appendChild(this.notes_modal_content);
+  this.notes_modal.appendChild(this.notes_modal_dialog);
+
+  this.tab_content_div.appendChild(this.notes_modal);
 
   this.current_goal_id = null;
 
@@ -774,6 +842,7 @@ Home_Tab.prototype.save_current = function() {
 
     let new_goal = {};
     new_goal.name = this.current_goal_name_field.value;
+    new_goal.notes = this.notes_field.value;
     new_goal.status_id = selected_status_id;
     new_goal.target_date = target_date;
     // new_goal.due_date = this.due_date_picker.selectedDates[0];
@@ -794,6 +863,7 @@ Home_Tab.prototype.save_current = function() {
 
     let current_goal = this.goal_id_map[this.current_goal_id];
     current_goal.name = this.current_goal_name_field.value;
+    current_goal.notes = this.notes_field.value;
     current_goal.status_id = selected_status_id;
     current_goal.target_date = target_date;
     // current_goal.due_date = this.due_date_picker.selectedDates[0];
@@ -1052,8 +1122,8 @@ Home_Tab.prototype.goal_clicked = function(goal_id) {
   
   this.current_goal_id = goal_id;
   let current_goal = this.goal_id_map[goal_id];
-  // this.current_goal_id_field.value = goal_id;
   this.current_goal_name_field.value = current_goal.name;
+  this.notes_field.value = current_goal.notes;
   this.cancel_delete_button.innerHTML = "Delete";
 
   $("#current_goal_status_select").val(
@@ -1065,13 +1135,6 @@ Home_Tab.prototype.goal_clicked = function(goal_id) {
   else {
     this.target_date_picker.setDate(current_goal.target_date);
   }
-
-  // if(current_goal.due_date === null) {
-  //   this.due_date_picker.setDate(null);
-  // }
-  // else {
-  //   this.due_date_picker.setDate(current_goal.due_date);
-  // }
 
   if(current_goal.completed_on === null) {
     this.completed_date_picker.setDate(null);
@@ -1132,6 +1195,7 @@ Home_Tab.prototype.new_goal_clicked = function() {
   this.current_goal_id = null;
   // this.current_goal_id_field.value = "";
   this.current_goal_name_field.value = "";
+  this.notes_field.value = "";
 
   this.new_subgoal_button.classList.add("invisible");
 
@@ -1307,4 +1371,26 @@ Home_Tab.prototype.move_to_status_clicked = function(status_id) {
   this.target_date_picker.setDate(null);
 
   return this.save_clicked();
+};
+
+Home_Tab.prototype.notes_button_clicked = function() {
+  $("#notes_modal").modal("show");
+};
+
+Home_Tab.prototype.close_notes_button_clicked = function() {
+
+  let current_goal = this.goal_id_map[this.current_goal_id];
+
+  if(this.current_goal_id !== null) {
+    this.notes_field.value = current_goal.notes;
+  }
+  else {
+    this.notes_field.value = "";
+  }
+
+  $("#notes_modal").modal("hide");
+};
+
+Home_Tab.prototype.save_notes_clicked = function() {
+  $("#notes_modal").modal("hide");
 };
