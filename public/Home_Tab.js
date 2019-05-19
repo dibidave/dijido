@@ -1097,7 +1097,7 @@ Home_Tab.prototype.update_goals_table = function() {
       goal_button.setAttribute("aria-pressed", true);
     }
     else if(goal.is_active) {
-      goal_button.className = "btn btn-outline-primary btn-lg btn-block " +
+      goal_button.className = "btn btn-success btn-lg btn-block " +
         "no-gutters";
     }
 
