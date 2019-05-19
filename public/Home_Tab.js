@@ -327,7 +327,7 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
   this.filter_by_current_button.innerHTML = "Filter by Current";
 
   this.filter_by_current_button.addEventListener("click",
-    this.filter_by_current_clicked.bind(this));
+    this.filter_by_goal_clicked.bind(this));
 
   this.filter_by_current_button_column
     .appendChild(this.filter_by_current_button);
@@ -1034,18 +1034,21 @@ Home_Tab.prototype.update_goals_table = function() {
 
     let goal = this.goals[goal_index];
 
+    // If this goal should not be displayed, ignore it
     if(!this.is_goal_in_filter(goal)) {
       continue;
     }
 
     let status_div = null;
 
+    // If this goal has an explicit status, we use it
     if(goal.status_id in this.status_divs_by_id) {
       status_div = this.status_divs_by_id[goal.status_id];
     }
     else if(goal.target_date === null) {
       continue;
     }
+    // Otherwise we deduce the goal's status by its target date
     else {
 
       let goal_target_date = new Date(goal.target_date);
@@ -1072,30 +1075,74 @@ Home_Tab.prototype.update_goals_table = function() {
       continue;
     }
 
-    let goal_button = document.createElement("button");
-    goal_button.className = "btn btn-outline-primary btn-lg btn-block";
+    let goal_button = document.createElement("div");
+    goal_button.className = "btn btn-outline-primary btn-lg " +
+      "btn-block no-gutters";
+
+    let goal_container = document.createElement("div");
+    goal_container.className = "row no-gutters";
+
+    let goal_name_div = document.createElement("div");
+
+    if(goal._id in this.parent_goal_id_set) {
+      goal_name_div.className = "col-10 no-gutters";
+    }
+    else {
+      goal_name_div.className = "col-12 no-gutters";
+    }
 
     if(goal._id === this.current_goal_id) {
-      goal_button.className = "btn btn-outline-primary btn-lg btn-block active";
+      goal_button.className = "btn active btn-outline-primary btn-lg " +
+        "btn-block no-gutters";
       goal_button.setAttribute("aria-pressed", true);
     }
     else if(goal.is_active) {
-      goal_button.className = "btn btn-success btn-lg btn-block";
+      goal_button.className = "btn btn-outline-primary btn-lg btn-block " +
+        "no-gutters";
     }
 
-    goal_button.setAttribute("width", "100%");
-    goal_button.innerHTML = goal.name;
+    goal_name_div.innerHTML = goal.name;
+
+    goal_name_div.setAttribute("width", "100%");
+
     // Allow text wrapping
-    goal_button.style["white-space"] = "normal";
+    goal_name_div.style["white-space"] = "normal";
+
     goal_button.addEventListener(
       "click", this.goal_clicked.bind(this, goal._id));
 
     this.goal_buttons_by_id[goal._id] = goal_button;
 
+    goal_container.appendChild(goal_name_div);
+
+    if(goal._id in this.parent_goal_id_set) {
+
+      let goal_expand_button_div = document.createElement("div");
+      goal_expand_button_div.className = "col-2 no-gutters";
+
+      let goal_expand_button = document.createElement("img");
+      goal_expand_button.src = "images/noun_Arrow_1743494.svg";
+      goal_expand_button.className = "no-gutters";
+      goal_expand_button.setAttribute("width", "100%");
+
+      goal_expand_button.addEventListener(
+        "click", this.filter_by_goal_clicked.bind(this, goal._id));
+
+      goal_expand_button_div.appendChild(goal_expand_button);
+
+      goal_container.appendChild(goal_expand_button_div);
+    }
+
+    goal_button.appendChild(goal_container);
+
     status_div.appendChild(goal_button);
   }
 
   this.goals_table_div.appendChild(this.goals_table_row);
+};
+
+Home_Tab.prototype.expand_goal_clicked = function(goal_id) {
+
 };
 
 Home_Tab.prototype.goal_clicked = function(goal_id) {
@@ -1108,10 +1155,11 @@ Home_Tab.prototype.goal_clicked = function(goal_id) {
       let goal_button = this.goal_buttons_by_id[this.current_goal_id];
 
       if(current_goal.is_active) {
-        goal_button.className = "btn btn-success btn-lg btn-block";
+        goal_button.className = "btn btn-success btn-lg btn-block no-gutters";
       }
       else {
-        goal_button.className = "btn btn-outline-primary btn-lg btn-block";
+        goal_button.className = "btn btn-outline-primary btn-lg btn-block " + 
+          "no-gutters";
       }
 
       goal_button.setAttribute("aria-pressed", false);
@@ -1177,7 +1225,8 @@ Home_Tab.prototype.goal_clicked = function(goal_id) {
   this.recurrence_fixed_checkbox.checked = current_goal.is_recurrence_fixed;
 
   let goal_button = this.goal_buttons_by_id[goal_id];
-  goal_button.className = "btn btn-outline-primary btn-lg btn-block active";
+  goal_button.className = "btn btn-outline-primary btn-lg btn-block active " +
+    "no-gutters";
   goal_button.setAttribute("aria-pressed", true);
 };
 
@@ -1226,11 +1275,22 @@ Home_Tab.prototype.new_subgoal_clicked = function() {
   }
 };
 
-Home_Tab.prototype.filter_by_current_clicked = function() {
+Home_Tab.prototype.filter_by_goal_clicked = function(parameter_1, parameter_2) {
 
-  if(this.current_goal_id !== null) {
+  if(parameter_2 === undefined) {
+    event = parameter_1;
+    goal_id = this.current_goal_id;
+  }
+  else {
+    event = parameter_2;
+    goal_id = parameter_1;
+  }
 
-    this.filter_goal_ids = [this.current_goal_id];
+  event.stopPropagation();
+
+  if(goal_id !== null) {
+
+    this.filter_goal_ids = [goal_id];
 
     $("#parent_goal_filter_select").val(this.filter_goal_ids).trigger("change");
   }
