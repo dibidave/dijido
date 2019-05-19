@@ -35,6 +35,7 @@ exports.create_goal = function(goal_JSON) {
   Object.assign(goal, Goal);
 
   goal.name = goal_JSON.name;
+  goal.notes = "";
   goal.status_id = goal_JSON.status_id;
 
   if(goal_JSON.hasOwnProperty("target_date")) {
@@ -90,6 +91,29 @@ exports.create_goal = function(goal_JSON) {
     goal.parent_goal_ids = [];
   }
 
+  if(goal_JSON.hasOwnProperty("is_active")) {
+    goal.is_active = goal_JSON.is_active;
+  }
+  else {
+    goal.is_active = false;
+  }
+
+  if(goal_JSON.hasOwnProperty("recurrence_rate")) {
+
+    goal.recurrence_rate = goal_JSON.recurrence_rate;
+  }
+  else {
+    goal.recurrence_rate = null;
+  }
+
+  if(goal_JSON.hasOwnProperty("recurrence_time_unit")) {
+
+    goal.recurrence_time_unit = goal_JSON.recurrence_time_unit;
+  }
+  else {
+    goal.recurrence_time_unit = null;
+  }
+
   var promise = goal.save()
   .then(function() {
     return goal;
@@ -116,7 +140,7 @@ exports.get_goal_by_id = function(goal_id) {
 
 exports.get_goals = function(filter) {
 
-  var promise = database.get_objects(collection_name, filter)
+  var promise = database.get_objects(collection_name, filter, {target_date: 1})
   .then(function(results) {
 
     var goals = [];
@@ -137,3 +161,5 @@ exports.get_goals = function(filter) {
 
   return promise;
 };
+
+exports.collection_name = collection_name;

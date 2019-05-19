@@ -2,7 +2,7 @@ var http = require("http");
 var https = require("https");
 var logger = require("sqit/logging/Logger").init_logger("server");
 var app = require("../app");
-var database = require("sqit/database/database");
+var database = require("../database");
 var config = require("../config/config");
 var fs = require("fs");
 
@@ -12,12 +12,10 @@ var certificate_file_path = config.certificate_file_path;
 
 app.set("port", port);
 
-var connection_promises = [];
+database.connect()
+.then(function() {
 
-connection_promises.push(database.connect());
-
-Promise.all(connection_promises)
-.then(function() {var private_key = null;
+  var private_key = null;
   var certificate = null;
   var server = null;
   var use_HTTPS = false;
@@ -41,12 +39,16 @@ Promise.all(connection_promises)
     };
 
     server = https.createServer(HTTPS_options, app);
-    var redirect_server = http.createServer(function(req, res) {
-     res.writeHead(301, {
-       "Location": "https://" + req.headers.host + req.url
-     });
-     res.end();
-    });
+    var redirect_server = http.createServer(
+      function(request, response) {
+        response.writeHead(301,
+          {
+            "Location": "https://" + request.headers.host + request.url
+          }
+        );
+        response.end();
+      }
+    );
 
     redirect_server.listen(config.insecure_port);
   }

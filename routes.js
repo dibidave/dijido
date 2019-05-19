@@ -1,11 +1,12 @@
 var express = require("express");
 var router = express.Router();
 var database = require("sqit/database/database");
-var dateformat = require('dateformat');
+var dateformat = require("dateformat");
 var logger = require("sqit/logging/Logger").get_logger("routes");
 var path = require("path");
 var Goal = require("./Goal");
 var Status = require("./Status");
+var moment = require("moment");
 
 var is_authenticated = function(request, response, next) {
 
@@ -26,7 +27,24 @@ var post_goal = function(request, response) {
 
   Goal.create_goal(request.body)
   .then(function(goal) {
-    return response.json({goal: goal});
+
+    var promise = Promise.resolve();
+
+    if(goal.recurrence_rate !== null) {
+
+      var new_subgoal_JSON = {};
+      new_subgoal_JSON.name = goal.name;
+      new_subgoal_JSON.parent_goal_ids = [goal._id];
+
+      var target_date = moment().clone();
+      new_subgoal_JSON.target_date = target_date.toDate();
+
+      promise = promise.then(Goal.create_goal.bind(null, new_subgoal_JSON));
+    }
+
+    return promise.then(function() {
+      return response.json({goal: goal});
+    });
   });
 };
 
@@ -48,7 +66,13 @@ var get_goals = function(request, response) {
       continue;
     }
 
-    filter[parameter] = request.query[parameter];
+    var filter_value = request.query[parameter];
+
+    if(filter_value === "null") {
+      filter_value = null;
+    }
+
+    filter[parameter] = filter_value;
   }
 
   Goal.get_goals(filter)
@@ -94,8 +118,69 @@ var update_goal = function(request, response) {
 
   Goal.get_goal_by_id(goal_id)
   .then(function(goal) {
-    goal.from_JSON(updated_goal);
-    return goal.save();
+
+    var recurrence_promise = new Promise(function(resolve, reject) {
+
+      // Some logic for recurring tasks - check if the updated goal has been
+      // completed or abandoned, if it hasn't it's not a completed recurrent
+      // goal
+      if((updated_goal.completed_on === null || goal.completed_on !== null) &&
+        (updated_goal.abandoned_on === null || goal.abandoned_on !== null)) {
+        return resolve();
+      }
+
+      // If it has more than one parent, it's not a recurring goal
+      if(goal.parent_goal_ids.length !== 1) {
+        return resolve();
+      }
+
+      // Check the parent to see if it's recurring
+      Goal.get_goal_by_id(goal.parent_goal_ids[0])
+      .then(function(parent_goal) {
+
+        // If the parent isn't recurring, don't gotta do anything
+        if(parent_goal.recurrence_rate === null) {
+          return resolve();
+        }
+
+        // Otherwise we create a new goal with the same name and parent as the
+        // completed goal
+        var new_goal_JSON = {};
+        new_goal_JSON.name = updated_goal.name;
+        new_goal_JSON.parent_goal_ids = updated_goal.parent_goal_ids;
+
+        var target_date = null;
+
+        if(parent_goal.is_recurrence_fixed) {
+          target_date = moment(updated_goal.target_date);
+        }
+        else {
+          if(updated_goal.completed_on !== null) {
+            target_date = moment(updated_goal.completed_on);
+          }
+          else {
+            target_date = moment(updated_goal.abandoned_on);
+          }
+        }
+        
+
+        target_date.add(
+          parent_goal.recurrence_rate, parent_goal.recurrence_time_unit);
+
+        new_goal_JSON.target_date = target_date.toDate();
+
+        Goal.create_goal(new_goal_JSON)
+        .then(function(new_goal) {
+          return resolve();
+        })
+      });
+    });
+
+    return recurrence_promise
+    .then(function() {
+      goal.from_JSON(updated_goal);
+      return goal.save();
+    });
   }).then(function(goal) {
     return response.json({});
   });
