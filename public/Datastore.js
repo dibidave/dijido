@@ -120,7 +120,7 @@ Datastore.prototype.delete_goal = function(goal_id) {
 };
 
 Datastore.prototype.update_goal = function(goal_id, goal) {
-
+  
   return this.connector.put_goal(goal_id, goal)
   .then(function(goal) {
     
@@ -132,6 +132,7 @@ Datastore.prototype.update_goal = function(goal_id, goal) {
     }
 
     this.goal_id_map[goal._id] = goal;
+    this.sort_goals();
   }.bind(this));
 };
 
@@ -145,6 +146,14 @@ Datastore.prototype.add_goal = function(goal) {
   .then(function(goal) {
     this.goals.push(goal);
     this.goal_id_map[goal._id] = goal;
+    this.sort_goals();
   }.bind(this));
 
+};
+
+Datastore.prototype.sort_goals = function() {
+
+  this.goals.sort((a, b) => (a.target_date > b.target_date) ? 1 :
+    (a.target_date === b.target_date) ? ((a.name > b.name) ? 1 : -1) : -1);
+  
 };

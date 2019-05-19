@@ -182,7 +182,7 @@ var update_goal = function(request, response) {
       return goal.save();
     });
   }).then(function(goal) {
-    return response.json({});
+    return response.json(goal);
   });
 };
 
