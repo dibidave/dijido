@@ -191,3 +191,63 @@ Connector.prototype.post_login = function(username, password) {
 
   return promise;
 };
+
+Connector.prototype.get_notes = function() {
+
+  var URL = this.base_URL + "/notes";
+
+  var promise = get_URL(URL)
+    .then(function(response) {
+      return response.notes;
+    });
+
+  return promise;
+};
+
+Connector.prototype.get_note = function(note_id) {
+  
+  var URL = this.base_URL + "/notes/?_id=" + note_id;
+
+  var promise = get_URL(URL)
+    .then(function(response) {
+      return response.notes[0];
+    });
+
+  return promise;
+
+};
+
+Connector.prototype.post_note = function(note) {
+  var URL = this.base_URL + "/notes";
+
+  var promise = post_URL(URL, note)
+    .then(function(response) {
+      return response.note;
+    });
+
+  return promise;
+};
+
+Connector.prototype.put_note = function(note_id, note) {
+
+  var URL = this.base_URL + "/notes/" + note_id;
+
+  var promise = put_URL(URL, note)
+  .then(function(response) {
+    return response;
+  });
+
+  return promise;
+};
+
+Connector.prototype.delete_note = function(note_id) {
+
+  var URL = this.base_URL + "/notes/" + note_id;
+
+  var promise = delete_URL(URL)
+  .then(function(response) {
+    return response;
+  });
+
+  return promise;
+};

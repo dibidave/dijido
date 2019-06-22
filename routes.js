@@ -5,6 +5,7 @@ var dateformat = require("dateformat");
 var logger = require("sqit/logging/Logger").get_logger("routes");
 var path = require("path");
 var Goal = require("./Goal");
+var Note = require("./Note");
 var Status = require("./Status");
 var moment = require("moment");
 
@@ -198,6 +199,64 @@ var delete_goal = function(request, response) {
   });
 };
 
+var get_notes = function(request, response) {
+
+  Note.get_notes()
+  .then(function(notes) {
+
+    var note_JSON_objects = [];
+
+    for(var note_index = 0; note_index < notes.length;
+      note_index++) {
+
+      var note_JSON_object = notes[note_index].to_JSON();
+
+      note_JSON_objects.push(note_JSON_object);
+    }
+
+    return response.json({notes: note_JSON_objects});
+  });
+};
+
+var post_note = function(request, response) {
+
+  Note.create_note(request.body)
+  .then(function(note) {
+
+    var promise = Promise.resolve();
+
+    return promise.then(function() {
+      return response.json({note: note});
+    });
+  });
+};
+
+var update_note = function(request, response) {
+
+  var note_id = request.params._id;
+  var updated_note = request.body;
+
+  Note.get_note_by_id(note_id)
+  .then(function(note) {
+    note.from_JSON(updated_note);
+    return note.save();
+  }).then(function(note) {
+    return response.json(note);
+  });
+};
+
+var delete_note = function(request, response) {
+
+  var note_id = request.params._id;
+
+  Note.get_note_by_id(note_id)
+  .then(function(note) {
+    return note.delete();
+  }).then(function(note) {
+    return response.json({});
+  });
+};
+
 var get_session = function(request, response) {
 
   return response.json({
@@ -212,6 +271,10 @@ router.get("/statuses", is_authenticated, get_statuses);
 router.post("/statuses", is_authenticated, post_status);
 router.put("/goals/:_id", is_authenticated, update_goal);
 router.delete("/goals/:_id", is_authenticated, delete_goal);
+router.get("/notes", is_authenticated, get_notes);
+router.post("/notes", is_authenticated, post_note);
+router.put("/notes/:_id", is_authenticated, update_note);
+router.delete("/notes/:_id", is_authenticated, delete_note);
 router.get("/session", get_session);
 
 module.exports = router;

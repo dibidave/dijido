@@ -36,6 +36,7 @@
     <script src="Datastore.js" type="text/javascript"></script>
     <script src="Main_Frame.js" type="text/javascript"></script>
     <script src="Home_Tab.js" type="text/javascript"></script>
+    <script src="Notes_Tab.js" type="text/javascript"></script>
     <script src="util.js" type="text/javascript"></script>
     <script type="text/javascript">
 
@@ -68,6 +69,14 @@
             datastore.sync()
             .then(function() {
               frame = new Main_Frame(container, datastore);
+
+              $(function() {
+                var hash = window.location.hash;
+
+                if(hash === "#notes") {
+                  hash && $('ul.nav a[href="' + hash + '"]').tab('show');
+                }
+              });
             });
           }
           else {

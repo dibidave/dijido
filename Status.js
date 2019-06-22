@@ -41,7 +41,7 @@ exports.create_status = function(status_JSON) {
   return promise;
 };
 
-exports.get_statuses = function(user_id) {
+exports.get_statuses = function() {
 
   var promise = database.get_objects(collection_name)
   .then(function(results) {
