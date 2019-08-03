@@ -688,6 +688,7 @@ Home_Tab.prototype.update_recurrence_dropdown = function() {
   var recurrence_time_unit_names = {
     "Hour": "hour",
     "Day": "day",
+    "Workday": "workday",
     "Week": "week",
     "Month": "month",
     "Year": "year"
