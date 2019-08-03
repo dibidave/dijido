@@ -43,6 +43,7 @@ function Notes_Tab(tab_header_div, tab_content_div, datastore) {
   this.current_note_text_row.appendChild(this.current_note_text_label);
 
   this.current_note_text_field = document.createElement("textarea");
+  this.current_note_text_field.id = "current_note_text_field";
   this.current_note_text_field.className = "form-control py-3";
   this.current_note_text_field.align = "center";
   this.current_note_text_field.setAttribute("rows", 5);
@@ -107,6 +108,10 @@ function Notes_Tab(tab_header_div, tab_content_div, datastore) {
   this.current_note_id = null;
 
   this.update_notes();
+
+  $(document).ready(function() {
+    $('#current_note_text_field').focus();
+  });
 };
 
 Notes_Tab.prototype.update_notes = function() {

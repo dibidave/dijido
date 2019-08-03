@@ -152,21 +152,39 @@ var update_goal = function(request, response) {
 
         var target_date = null;
 
+        // If recurrence is fixed, it's assumed this is a task that must be
+        // completed on a fixed, rigid schedule, and if an event is completed
+        // or abandoned, the next fixed time point must be completed as well
         if(parent_goal.is_recurrence_fixed) {
+
           target_date = moment(updated_goal.target_date);
+
+          target_date.add(
+            parent_goal.recurrence_rate, parent_goal.recurrence_time_unit);
+
         }
+
+        // If recurrence is not fixed, it's... loose. It means, if you
+        // completed this task, queue it up again for the same time as when
+        // you completed it, but in the recurrence time in the future.
+        // If it was abandoned, though, we'll try again for the next 
+        // target date
         else {
           if(updated_goal.completed_on !== null) {
             target_date = moment(updated_goal.completed_on);
           }
           else {
-            target_date = moment(updated_goal.abandoned_on);
+            target_date = moment(updated_goal.target_date);
+          }
+        
+          var now = moment();
+
+          while(target_date < now) {
+
+            target_date.add(
+              parent_goal.recurrence_rate, parent_goal.recurrence_time_unit);
           }
         }
-        
-
-        target_date.add(
-          parent_goal.recurrence_rate, parent_goal.recurrence_time_unit);
 
         new_goal_JSON.target_date = target_date.toDate();
 
