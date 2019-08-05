@@ -385,7 +385,7 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
   this.additional_filter_options_row.className = "row justify-content-center";
 
   this.hide_non_leaf_div = document.createElement("div");
-  this.hide_non_leaf_div.className = "form-check";
+  this.hide_non_leaf_div.className = "col-md-4 form-check";
 
   this.hide_non_leaf_checkbox = document.createElement("input");
   this.hide_non_leaf_checkbox.id = "hide_non_leaf_checkbox";
@@ -398,13 +398,35 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
   this.hide_non_leaf_div.appendChild(this.hide_non_leaf_checkbox);
 
   this.hide_non_leaf_label = document.createElement("label");
-  this.hide_non_leaf_label.innerHTML = "Hide Non-Leaf Nodes";
+  this.hide_non_leaf_label.innerHTML = "Hide Non-Leaf";
   this.hide_non_leaf_label.className = "form-check-label text-nowrap";
   this.hide_non_leaf_label.setAttribute("for", "hide_non_leaf_checkbox");
 
   this.hide_non_leaf_div.appendChild(this.hide_non_leaf_label);
 
   this.additional_filter_options_row.appendChild(this.hide_non_leaf_div);
+
+  this.hide_recurrent_div = document.createElement("div");
+  this.hide_recurrent_div.className = "col-md-4 form-check";
+
+  this.hide_recurrent_checkbox = document.createElement("input");
+  this.hide_recurrent_checkbox.id = "hide_recurrent_checkbox";
+  this.hide_recurrent_checkbox.className = "form-check-input";
+  this.hide_recurrent_checkbox.setAttribute("type", "checkbox");
+  this.hide_recurrent_checkbox.checked = true;
+  this.hide_recurrent_checkbox.addEventListener("click",
+    this.parent_filters_changed.bind(this));
+
+  this.hide_recurrent_div.appendChild(this.hide_recurrent_checkbox);
+
+  this.hide_recurrent_label = document.createElement("label");
+  this.hide_recurrent_label.innerHTML = "Hide Recurrent";
+  this.hide_recurrent_label.className = "form-check-label text-nowrap";
+  this.hide_recurrent_label.setAttribute("for", "hide_recurrent_checkbox");
+
+  this.hide_recurrent_div.appendChild(this.hide_recurrent_label);
+
+  this.additional_filter_options_row.appendChild(this.hide_recurrent_div);
 
   this.grid_filter_div.appendChild(this.additional_filter_options_row);
 
@@ -1343,6 +1365,10 @@ Home_Tab.prototype.is_goal_in_filter = function(goal, ignore_depth) {
     if(goal._id in this.parent_goal_id_set) {
       return false;
     }
+  }
+
+  if(this.hide_recurrent_checkbox.checked && goal.recurrence_rate !== null) {
+    return false;
   }
 
   if(this.filter_goal_ids.length < 1) {
