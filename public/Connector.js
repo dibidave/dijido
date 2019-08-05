@@ -204,6 +204,18 @@ Connector.prototype.get_notes = function() {
   return promise;
 };
 
+Connector.prototype.get_config = function() {
+
+  var URL = this.base_URL + "/config";
+
+  var promise = get_URL(URL)
+    .then(function(response) {
+      return response.config;
+    });
+
+  return promise;
+};
+
 Connector.prototype.get_note = function(note_id) {
   
   var URL = this.base_URL + "/notes/?_id=" + note_id;

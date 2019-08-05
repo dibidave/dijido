@@ -8,6 +8,7 @@ var Goal = require("./Goal");
 var Note = require("./Note");
 var Status = require("./Status");
 var moment = require("moment");
+var config = require("./config/config");
 
 var is_authenticated = function(request, response, next) {
 
@@ -306,7 +307,17 @@ var get_session = function(request, response) {
   });
 };
 
+var get_config = function(request, response) {
+
+  return response.json({
+    config: {
+      end_of_day_offset: config.end_of_day_offset
+    }
+  });
+};
+
 router.get("/", is_authenticated, get_home_page);
+router.get("/config", is_authenticated, get_config);
 router.post("/goals", is_authenticated, post_goal);
 router.get("/goals", is_authenticated, get_goals);
 router.get("/statuses", is_authenticated, get_statuses);

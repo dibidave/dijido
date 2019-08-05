@@ -42,6 +42,7 @@
 
       var connector = null;
       var frame = null;
+      var datastore = null;
 
       var url = document.URL;
       var base_URL = url.substr(0, url.indexOf("/"));
@@ -53,8 +54,8 @@
       }
 
       function on_load() {
-        var connector = new Connector({base_URL:base_URL});
-        var datastore = new Datastore(connector);
+        connector = new Connector({base_URL:base_URL});
+        datastore = new Datastore(connector);
 
         var container = document.createElement("div");
         container.id = "main_frame";

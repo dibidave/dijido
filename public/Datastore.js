@@ -7,6 +7,7 @@ var Datastore = function(connector) {
   this.statuses = [];
   this.notes = [];
   this.note_id_map = {};
+  this.config = {};
 };
 
 Datastore.prototype.sync = function() {
@@ -43,6 +44,10 @@ Datastore.prototype.sync = function() {
   .then(function(server_notes) {
     this.notes = server_notes;
     this.sort_notes();
+  }.bind(this)
+  ).then(this.connector.get_config)
+  .then(function(config) {
+    this.config = config;
   }.bind(this));
 };
 

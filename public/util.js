@@ -1,4 +1,3 @@
-
 function Util() {}
 
 Util.get_date_range_for_status = function(status) {
@@ -10,7 +9,7 @@ Util.get_date_range_for_status = function(status) {
     }
   }
 
-  let today = moment();
+  let today = moment().clone().subtract(datastore.config.end_of_day_offset, "hours");
   let start = null;
   let end = null;
   let time_unit = null;
@@ -43,6 +42,9 @@ Util.get_date_range_for_status = function(status) {
         end.add(1, "day");
       }
     }
+    
+    end.add(datastore.config.end_of_day_offset, "hours");
+
     end.toDate();
   }
 
