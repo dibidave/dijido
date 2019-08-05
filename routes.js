@@ -159,8 +159,20 @@ var update_goal = function(request, response) {
 
           target_date = moment(updated_goal.target_date);
 
+          let time_unit = parent_goal.recurrence_time_unit;
+
+          if(time_unit === "workday") {
+            time_unit = "day";
+          }
+
           target_date.add(
-            parent_goal.recurrence_rate, parent_goal.recurrence_time_unit);
+            parent_goal.recurrence_rate, time_unit);
+
+          if(parent_goal.recurrence_time_unit === "workday") {
+            while(target_date.isoWeekday() > 5) {
+              start.add(1, "day");
+            }
+          }
 
         }
 
@@ -181,8 +193,20 @@ var update_goal = function(request, response) {
 
           while(target_date < now) {
 
+            let time_unit = parent_goal.recurrence_time_unit;
+
+            if(time_unit === "workday") {
+              time_unit = "day";
+            }
+
             target_date.add(
-              parent_goal.recurrence_rate, parent_goal.recurrence_time_unit);
+              parent_goal.recurrence_rate, time_unit);
+
+            if(parent_goal.recurrence_time_unit === "workday") {
+              while(target_date.isoWeekday() > 5) {
+                start.add(1, "day");
+              }
+            }
           }
         }
 
