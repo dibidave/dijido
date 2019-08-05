@@ -171,7 +171,7 @@ var update_goal = function(request, response) {
 
           if(parent_goal.recurrence_time_unit === "workday") {
             while(target_date.isoWeekday() > 5) {
-              start.add(1, "day");
+              target_date.add(1, "day");
             }
           }
 
@@ -205,7 +205,7 @@ var update_goal = function(request, response) {
 
             if(parent_goal.recurrence_time_unit === "workday") {
               while(target_date.isoWeekday() > 5) {
-                start.add(1, "day");
+                target_date.add(1, "day");
               }
             }
           }
