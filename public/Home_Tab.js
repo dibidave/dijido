@@ -1,3 +1,5 @@
+const MAX_COLUMNS = 6;
+
 function Home_Tab(tab_header_div, tab_content_div, datastore) {
 
   this.tab_header = Tab_Header("Home", "#home", tab_header_div, true);
@@ -523,7 +525,7 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
       $("#active_statuses_select").select2(
         {
           width: "50%",
-          maximumSelectionLength: 6
+          maximumSelectionLength: MAX_COLUMNS
         }
       );
       $("#parent_goals_select").select2(
@@ -739,7 +741,9 @@ Home_Tab.prototype.update_status_dropdown = function() {
 
     var status = this.statuses[status_index];
 
-    default_status_ids.push(status._id);
+    if(status_index < MAX_COLUMNS) {
+      default_status_ids.push(status._id);
+    }
 
     var option = new Option(status.name, status._id, false, false);
     $("#current_goal_status_select").append(option).trigger("change");
