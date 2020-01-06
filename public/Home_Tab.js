@@ -1535,6 +1535,15 @@ Home_Tab.prototype.set_organized_clicked = function() {
     for(var goal_index = 0; goal_index < goals.length; goal_index++) {
 
       let goal = goals[goal_index];
+
+      // Look for recurring goals; we don't organize these
+      if(goal.parent_goal_ids.length === 1) {
+        let parent_goal = this.datastore.get_goal_by_id(goal.parent_goal_ids[0]);
+
+        if(parent_goal.recurrence_rate !== null) {
+          continue;
+        }
+      }
       
       goal.is_organized = false;
 
