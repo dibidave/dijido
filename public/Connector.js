@@ -26,14 +26,13 @@ function post_URL(URL, data) {
   var promise = new Promise(function(resolve, reject) {
     $.ajax({
       type: 'post',
-      dataType: 'json',
       contentType: 'application/json; charset=UTF-8',
       url: URL,
       data: data_JSON,
       error: function(jqXHR, status, error) {
         return reject(error);
       },
-      success: function(response) {
+      success: function(response, text_status) {
         return resolve(response);
       }
     });

@@ -13,7 +13,9 @@ var logger = require("sqit/logging/Logger").get_logger("app");
 var app = express();
 
 app.use(express_session({
-  secret: config.express_secret
+  secret: config.express_secret,
+  saveUninitialized: true,
+  resave: true
 }));
 
 passport.use(new Passport_Strategy(
@@ -69,7 +71,9 @@ app.use("/external/popper.js",
 app.post("/login", 
   passport.authenticate("local", { failureRedirect: "/" }),
   function(req, res) {
-    res.redirect("/");
+    return res.json({
+      session: req.session
+    });
 });
 
 app.get("/logout",
