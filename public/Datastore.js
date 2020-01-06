@@ -180,6 +180,8 @@ Datastore.prototype.update_goal = function(goal_id, goal) {
 
     this.goal_id_map[goal._id] = goal;
     this.sort_goals();
+
+    return goal;
   }.bind(this));
 };
 

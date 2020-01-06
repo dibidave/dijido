@@ -868,6 +868,7 @@ Home_Tab.prototype.save_current = function() {
     new_goal.recurrence_time_unit = recurrence_time_unit;
     new_goal.recurrence_rate = recurrence_rate;
     new_goal.is_recurrence_fixed = this.recurrence_fixed_checkbox.checked;
+    new_goal.is_organized = true;
 
     return this.datastore.add_goal(new_goal)
     .then(function(new_goal) {
@@ -889,6 +890,7 @@ Home_Tab.prototype.save_current = function() {
     current_goal.recurrence_time_unit = recurrence_time_unit;
     current_goal.recurrence_rate = recurrence_rate;
     current_goal.is_recurrence_fixed = this.recurrence_fixed_checkbox.checked;
+    current_goal.is_organized = true;
 
     return this.datastore.update_goal(current_goal._id, current_goal)
     .then(function() {
@@ -937,7 +939,10 @@ Home_Tab.prototype.set_active_clicked = function() {
 
       current_goal.is_active = false;
       this.set_active_button.innerHTML = "Set Active";
-      return this.datastore.update_goal(current_goal._id, current_goal);
+      return this.datastore.update_goal(current_goal._id, current_goal)
+      .then(function(goal) {
+        return this.update_goal_button(goal);
+      }.bind(this));
     }
 
     this.set_active_button.innerHTML = "Set Inactive";
@@ -952,13 +957,19 @@ Home_Tab.prototype.set_active_clicked = function() {
       active_goal.is_active = false;
 
       update_promises.push(this.datastore.update_goal(active_goal._id,
-        active_goal));
+        active_goal)
+      .then(function(goal) {
+        return this.update_goal_button(goal);
+      }.bind(this)));
     }
 
     current_goal.is_active = true;
 
     update_promises.push(this.datastore.update_goal(current_goal._id,
-      current_goal));
+      current_goal)
+    .then(function(goal) {
+      return this.update_goal_button(goal);
+    }.bind(this)));
 
     return Promise.all(update_promises);
 
@@ -967,6 +978,82 @@ Home_Tab.prototype.set_active_clicked = function() {
 
   return promise;
 
+};
+
+Home_Tab.prototype.update_goal_button = function(goal) {
+
+  if(!this.goal_buttons_by_id.hasOwnProperty(goal._id)) {
+    return;
+  }
+
+  var goal_button = this.goal_buttons_by_id[goal._id];
+
+  while(goal_button.firstChild) {
+    goal_button.removeChild(
+      goal_button.firstChild);
+  }
+
+  let goal_container = document.createElement("div");
+  goal_container.className = "row no-gutters";
+
+  let goal_name_div = document.createElement("div");
+
+  if(goal._id in this.parent_goal_id_set) {
+    goal_name_div.className = "col-10 no-gutters";
+  }
+  else {
+    goal_name_div.className = "col-12 no-gutters";
+  }
+
+  if(goal._id === this.current_goal_id) {
+    goal_button.className = "btn active btn-outline-primary btn-lg " +
+      "btn-block no-gutters";
+    goal_button.setAttribute("aria-pressed", true);
+  }
+  else if(goal.is_active) {
+    goal_button.className = "btn btn-success btn-lg btn-block " +
+      "no-gutters";
+  }
+  else if(!goal.is_organized) {
+    goal_button.className = "btn btn-info btn-lg btn-block " +
+      "no-gutters";
+  }
+  else {
+    goal_button.className = "btn btn-outline-primary btn-lg " +
+      "btn-block no-gutters";
+  }
+
+  goal_name_div.innerHTML = goal.name;
+
+  goal_name_div.setAttribute("width", "100%");
+
+  // Allow text wrapping
+  goal_name_div.style["white-space"] = "normal";
+
+  goal_button.addEventListener(
+    "click", this.goal_clicked.bind(this, goal._id));
+
+  goal_container.appendChild(goal_name_div);
+
+  if(goal._id in this.parent_goal_id_set) {
+
+    let goal_expand_button_div = document.createElement("div");
+    goal_expand_button_div.className = "col-2 no-gutters";
+
+    let goal_expand_button = document.createElement("img");
+    goal_expand_button.src = "images/noun_Arrow_1743494.svg";
+    goal_expand_button.className = "no-gutters";
+    goal_expand_button.setAttribute("width", "100%");
+
+    goal_expand_button.addEventListener(
+      "click", this.filter_by_goal_clicked.bind(this, goal._id));
+
+    goal_expand_button_div.appendChild(goal_expand_button);
+
+    goal_container.appendChild(goal_expand_button_div);
+  }
+
+  goal_button.appendChild(goal_container);
 };
 
 Home_Tab.prototype.update_goals_table = function() {
@@ -1091,77 +1178,15 @@ Home_Tab.prototype.update_goals_table = function() {
     }
 
     let goal_button = document.createElement("div");
-    goal_button.className = "btn btn-outline-primary btn-lg " +
-      "btn-block no-gutters";
-
-    let goal_container = document.createElement("div");
-    goal_container.className = "row no-gutters";
-
-    let goal_name_div = document.createElement("div");
-
-    if(goal._id in this.parent_goal_id_set) {
-      goal_name_div.className = "col-10 no-gutters";
-    }
-    else {
-      goal_name_div.className = "col-12 no-gutters";
-    }
-
-    if(goal._id === this.current_goal_id) {
-      goal_button.className = "btn active btn-outline-primary btn-lg " +
-        "btn-block no-gutters";
-      goal_button.setAttribute("aria-pressed", true);
-    }
-    else if(goal.is_active) {
-      goal_button.className = "btn btn-success btn-lg btn-block " +
-        "no-gutters";
-    }
-    else if(!goal.is_organized) {
-      goal_button.className = "btn btn-info btn-lg btn-block " +
-        "no-gutters";
-    }
-
-    goal_name_div.innerHTML = goal.name;
-
-    goal_name_div.setAttribute("width", "100%");
-
-    // Allow text wrapping
-    goal_name_div.style["white-space"] = "normal";
-
-    goal_button.addEventListener(
-      "click", this.goal_clicked.bind(this, goal._id));
 
     this.goal_buttons_by_id[goal._id] = goal_button;
 
-    goal_container.appendChild(goal_name_div);
-
-    if(goal._id in this.parent_goal_id_set) {
-
-      let goal_expand_button_div = document.createElement("div");
-      goal_expand_button_div.className = "col-2 no-gutters";
-
-      let goal_expand_button = document.createElement("img");
-      goal_expand_button.src = "images/noun_Arrow_1743494.svg";
-      goal_expand_button.className = "no-gutters";
-      goal_expand_button.setAttribute("width", "100%");
-
-      goal_expand_button.addEventListener(
-        "click", this.filter_by_goal_clicked.bind(this, goal._id));
-
-      goal_expand_button_div.appendChild(goal_expand_button);
-
-      goal_container.appendChild(goal_expand_button_div);
-    }
-
-    goal_button.appendChild(goal_container);
+    this.update_goal_button(goal);
 
     status_div.appendChild(goal_button);
   }
 
   this.goals_table_div.appendChild(this.goals_table_row);
-};
-
-Home_Tab.prototype.expand_goal_clicked = function(goal_id) {
-
 };
 
 Home_Tab.prototype.goal_clicked = function(goal_id) {
@@ -1510,12 +1535,11 @@ Home_Tab.prototype.set_organized_clicked = function() {
       
       goal.is_organized = false;
 
-      if(this.goal_buttons_by_id.hasOwnProperty(goal._id)) {
-        this.goal_buttons_by_id[goal._id].className = "btn btn-info btn-lg " + 
-          "btn-block no-gutters";
-      }
-
-      promises.push(this.datastore.update_goal(goal._id, goal));
+      promises.push(
+        this.datastore.update_goal(goal._id, goal)
+        .then(function(goal) {
+          return this.update_goal_button(goal);
+        }.bind(this)));
     }
 
     return Promise.all(promises)
@@ -1526,8 +1550,9 @@ Home_Tab.prototype.set_organized_clicked = function() {
   else {
     current_goal.is_organized = true;
     return this.datastore.update_goal(current_goal._id, current_goal)
-    .then(function() {
+    .then(function(goal) {
       this.set_organized_button.innerHTML = "Organize";
+      return this.update_goal_button(goal);
     }.bind(this));
   }
 
