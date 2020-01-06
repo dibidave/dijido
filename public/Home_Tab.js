@@ -755,6 +755,9 @@ Home_Tab.prototype.save_clicked = function() {
     if(is_new_goal) {
       return this.new_goal_clicked();
     }
+    else {
+      this.goal_clicked(this.current_goal_id);
+    }
   }.bind(this)
   ).catch(function() {
     return;
@@ -1525,7 +1528,7 @@ Home_Tab.prototype.set_organized_clicked = function() {
   if(current_goal.is_organized) {
 
     var goals = [current_goal];
-    goals.push(...this.get_all_child_goals(current_goal));
+    goals.push(...this.get_child_goals(current_goal, 1));
 
     var promises = [];
 
@@ -1558,9 +1561,13 @@ Home_Tab.prototype.set_organized_clicked = function() {
 
 };
 
-Home_Tab.prototype.get_all_child_goals = function(goal) {
+Home_Tab.prototype.get_child_goals = function(goal, max_depth, depth) {
 
   var child_goals = [];
+
+  if(depth === undefined) {
+    depth = 1;
+  }
 
   for(var goal_index = 0; goal_index < this.goals.length; goal_index++) {
 
@@ -1575,7 +1582,10 @@ Home_Tab.prototype.get_all_child_goals = function(goal) {
 
       if(parent_goal._id === goal._id) {
         child_goals.push(child_goal);
-        child_goals.push(...this.get_all_child_goals(child_goal));
+
+        if(depth < max_depth) {
+          child_goals.push(...this.get_child_goals(child_goal, max_depth, depth + 1));
+        }
       }
     }
 
