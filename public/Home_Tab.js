@@ -1505,12 +1505,15 @@ Home_Tab.prototype.set_organized_clicked = function() {
     var promises = [];
 
     for(var goal_index = 0; goal_index < goals.length; goal_index++) {
+
       let goal = goals[goal_index];
       
       goal.is_organized = false;
 
-      this.goal_buttons_by_id[goal._id].className = "btn btn-info btn-lg " + 
-        "btn-block no-gutters";
+      if(this.goal_buttons_by_id.hasOwnProperty(goal._id)) {
+        this.goal_buttons_by_id[goal._id].className = "btn btn-info btn-lg " + 
+          "btn-block no-gutters";
+      }
 
       promises.push(this.datastore.update_goal(goal._id, goal));
     }
