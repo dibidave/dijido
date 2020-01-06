@@ -137,7 +137,7 @@ var update_goal = function(request, response) {
       }
 
       // Check the parent to see if it's recurring
-      Goal.get_goal_by_id(goal.parent_goal_ids[0])
+      return Goal.get_goal_by_id(goal.parent_goal_ids[0])
       .then(function(parent_goal) {
 
         // If the parent isn't recurring, don't gotta do anything
@@ -167,7 +167,8 @@ var update_goal = function(request, response) {
           }
 
           target_date.add(
-            parent_goal.recurrence_rate, time_unit);
+            parent_goal.recurrence_rate, time_unit
+          );
 
           if(parent_goal.recurrence_time_unit === "workday") {
             while(target_date.isoWeekday() > 5) {
@@ -218,6 +219,8 @@ var update_goal = function(request, response) {
           return resolve();
         })
       });
+
+
     });
 
     return recurrence_promise

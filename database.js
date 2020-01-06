@@ -13,7 +13,7 @@ module.exports["connect"] = function() {
   });
 };
 
-const DATABASE_VERSION = 5;
+const DATABASE_VERSION = 6;
 
 var initialize_database = function() {
   return Promise.resolve();
@@ -71,11 +71,22 @@ var upgrade_database_v_4 = function() {
   );
 };
 
+var upgrade_database_v_5 = function() {
+  return database.update_many(Goal.collection_name, {},
+    {
+      $set: {
+        "is_organized": true
+      }
+    }
+  );
+};
+
 
 const VERSION_UPGRADE_MAP = {
   0: initialize_database,
   1: upgrade_database_v_1,
   2: upgrade_database_v_2,
   3: upgrade_database_v_3,
-  4: upgrade_database_v_4
+  4: upgrade_database_v_4,
+  5: upgrade_database_v_5
 };

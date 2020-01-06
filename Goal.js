@@ -114,6 +114,13 @@ exports.create_goal = function(goal_JSON) {
     goal.recurrence_time_unit = null;
   }
 
+  if(goal_JSON.hasOwnProperty("is_organized")) {
+    goal.is_organized = goal_JSON.is_organized;
+  }
+  else {
+    goal.is_organized = true;
+  }
+
   var promise = goal.save()
   .then(function() {
     return goal;
