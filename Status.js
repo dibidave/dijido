@@ -33,6 +33,13 @@ exports.create_status = function(status_JSON) {
     status.max_time = null;
   }
 
+  if(status_JSON.hasOwnProperty("is_default")) {
+    status.is_default = status_JSON.is_default;
+  }
+  else {
+    status.is_default = false;
+  }
+
   var promise = status.save()
   .then(function() {
     return status;

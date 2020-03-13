@@ -729,7 +729,7 @@ Home_Tab.prototype.update_status_dropdown = function() {
 
     var status = this.statuses[status_index];
 
-    if(status_index < MAX_COLUMNS) {
+    if(status.is_default && status_index < MAX_COLUMNS) {
       default_status_ids.push(status._id);
     }
 
