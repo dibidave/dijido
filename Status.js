@@ -71,3 +71,5 @@ exports.get_statuses = function() {
 
   return promise;
 };
+
+exports.collection_name = collection_name;

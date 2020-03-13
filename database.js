@@ -83,10 +83,11 @@ var upgrade_database_v_5 = function() {
 };
 
 var upgrade_database_v_6 = function() {
+
   return database.update_many(Status.collection_name, {},
     {
       $set: {
-        "is_default": false
+        "is_default": true
       }
     }
   );

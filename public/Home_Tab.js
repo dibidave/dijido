@@ -724,13 +724,16 @@ Home_Tab.prototype.update_status_dropdown = function() {
   $("#active_statuses_select").empty().trigger("change");
   $("#current_goal_status_select").empty().trigger("change");
 
+  let num_statuses_displayed = 0;
+  
   for(var status_index = 0; status_index < this.statuses.length;
     status_index++) {
 
     var status = this.statuses[status_index];
 
-    if(status.is_default && status_index < MAX_COLUMNS) {
+    if(status.is_default && num_statuses_displayed < MAX_COLUMNS) {
       default_status_ids.push(status._id);
+      num_statuses_displayed++;
     }
 
     var option = new Option(status.name, status._id, false, false);
