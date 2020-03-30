@@ -193,7 +193,9 @@ var update_goal = function(request, response) {
         
           var now = moment();
 
-          while(target_date < now) {
+          let num_increments = 0;
+
+          while(num_increments === 0 || target_date < now) {
 
             let time_unit = parent_goal.recurrence_time_unit;
 
@@ -209,6 +211,8 @@ var update_goal = function(request, response) {
                 target_date.add(1, "day");
               }
             }
+
+            num_increments = num_increments + 1;
           }
         }
 
