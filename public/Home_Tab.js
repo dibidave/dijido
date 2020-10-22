@@ -1,3 +1,5 @@
+const MAX_COLUMNS = 6;
+
 function Home_Tab(tab_header_div, tab_content_div, datastore) {
 
   this.tab_header = Tab_Header("Home", "#home", tab_header_div, true);
@@ -94,26 +96,6 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
 
   this.target_date_row.appendChild(this.target_date_field);
   this.current_goal_div.appendChild(this.target_date_row);
-  
-  // this.due_date_row = document.createElement("div");
-  // this.due_date_row.className = "pb-1 row";
-
-  // this.due_date_label = document.createElement("label");
-  // this.due_date_label.className = "label label-default col-sm-3";
-  // this.due_date_label.innerHTML = "Due Date";
-
-  // this.due_date_row.appendChild(this.due_date_label);
-  // this.due_date_field = document.createElement("input");
-  // this.due_date_field.className = "col-sm-6";
-  // this.due_date_picker = flatpickr(this.due_date_field,
-  //   {
-  //     defaultDate: null,
-  //     disableMobile: true
-  //   }
-  // );
-
-  // this.due_date_row.appendChild(this.due_date_field);
-  // this.current_goal_div.appendChild(this.due_date_row);
   
   this.completed_date_row = document.createElement("div");
   this.completed_date_row.className = "pb-1 row d-none";
@@ -254,7 +236,7 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
 
   this.set_active_button = document.createElement("button");
   this.set_active_button.className = "btn btn-primary";
-  this.set_active_button.innerHTML = "Make Active";
+  this.set_active_button.innerHTML = "Set Active";
   this.set_active_button.addEventListener(
     "click", this.set_active_clicked.bind(this));
 
@@ -267,6 +249,14 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
     "click", this.notes_button_clicked.bind(this));
 
   this.current_goal_buttons_row.appendChild(this.notes_button);
+
+  this.set_organized_button = document.createElement("button");
+  this.set_organized_button.className = "btn btn-primary invisible";
+  this.set_organized_button.innerHTML = "Set Organized";
+  this.set_organized_button.addEventListener(
+    "click", this.set_organized_clicked.bind(this));
+
+  this.current_goal_buttons_row.appendChild(this.set_organized_button);
 
   this.current_goal_div.appendChild(this.current_goal_buttons_row);
 
@@ -327,7 +317,7 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
   this.filter_by_current_button.innerHTML = "Filter by Current";
 
   this.filter_by_current_button.addEventListener("click",
-    this.filter_by_current_clicked.bind(this));
+    this.filter_by_goal_clicked.bind(this));
 
   this.filter_by_current_button_column
     .appendChild(this.filter_by_current_button);
@@ -385,7 +375,7 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
   this.additional_filter_options_row.className = "row justify-content-center";
 
   this.hide_non_leaf_div = document.createElement("div");
-  this.hide_non_leaf_div.className = "form-check";
+  this.hide_non_leaf_div.className = "col-md-4 form-check";
 
   this.hide_non_leaf_checkbox = document.createElement("input");
   this.hide_non_leaf_checkbox.id = "hide_non_leaf_checkbox";
@@ -398,13 +388,35 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
   this.hide_non_leaf_div.appendChild(this.hide_non_leaf_checkbox);
 
   this.hide_non_leaf_label = document.createElement("label");
-  this.hide_non_leaf_label.innerHTML = "Hide Non-Leaf Nodes";
+  this.hide_non_leaf_label.innerHTML = "Hide Non-Leaf";
   this.hide_non_leaf_label.className = "form-check-label text-nowrap";
   this.hide_non_leaf_label.setAttribute("for", "hide_non_leaf_checkbox");
 
   this.hide_non_leaf_div.appendChild(this.hide_non_leaf_label);
 
   this.additional_filter_options_row.appendChild(this.hide_non_leaf_div);
+
+  this.hide_recurrent_div = document.createElement("div");
+  this.hide_recurrent_div.className = "col-md-4 form-check";
+
+  this.hide_recurrent_checkbox = document.createElement("input");
+  this.hide_recurrent_checkbox.id = "hide_recurrent_checkbox";
+  this.hide_recurrent_checkbox.className = "form-check-input";
+  this.hide_recurrent_checkbox.setAttribute("type", "checkbox");
+  this.hide_recurrent_checkbox.checked = true;
+  this.hide_recurrent_checkbox.addEventListener("click",
+    this.parent_filters_changed.bind(this));
+
+  this.hide_recurrent_div.appendChild(this.hide_recurrent_checkbox);
+
+  this.hide_recurrent_label = document.createElement("label");
+  this.hide_recurrent_label.innerHTML = "Hide Recurrent";
+  this.hide_recurrent_label.className = "form-check-label text-nowrap";
+  this.hide_recurrent_label.setAttribute("for", "hide_recurrent_checkbox");
+
+  this.hide_recurrent_div.appendChild(this.hide_recurrent_label);
+
+  this.additional_filter_options_row.appendChild(this.hide_recurrent_div);
 
   this.grid_filter_div.appendChild(this.additional_filter_options_row);
 
@@ -501,7 +513,7 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
       $("#active_statuses_select").select2(
         {
           width: "50%",
-          maximumSelectionLength: 6
+          maximumSelectionLength: MAX_COLUMNS
         }
       );
       $("#parent_goals_select").select2(
@@ -688,6 +700,7 @@ Home_Tab.prototype.update_recurrence_dropdown = function() {
   var recurrence_time_unit_names = {
     "Hour": "hour",
     "Day": "day",
+    "Workday": "workday",
     "Week": "week",
     "Month": "month",
     "Year": "year"
@@ -711,12 +724,17 @@ Home_Tab.prototype.update_status_dropdown = function() {
   $("#active_statuses_select").empty().trigger("change");
   $("#current_goal_status_select").empty().trigger("change");
 
+  let num_statuses_displayed = 0;
+  
   for(var status_index = 0; status_index < this.statuses.length;
     status_index++) {
 
     var status = this.statuses[status_index];
 
-    default_status_ids.push(status._id);
+    if(status.is_default && num_statuses_displayed < MAX_COLUMNS) {
+      default_status_ids.push(status._id);
+      num_statuses_displayed++;
+    }
 
     var option = new Option(status.name, status._id, false, false);
     $("#current_goal_status_select").append(option).trigger("change");
@@ -739,6 +757,9 @@ Home_Tab.prototype.save_clicked = function() {
   .then(function() {
     if(is_new_goal) {
       return this.new_goal_clicked();
+    }
+    else {
+      this.goal_clicked(this.current_goal_id);
     }
   }.bind(this)
   ).catch(function() {
@@ -853,6 +874,7 @@ Home_Tab.prototype.save_current = function() {
     new_goal.recurrence_time_unit = recurrence_time_unit;
     new_goal.recurrence_rate = recurrence_rate;
     new_goal.is_recurrence_fixed = this.recurrence_fixed_checkbox.checked;
+    new_goal.is_organized = true;
 
     return this.datastore.add_goal(new_goal)
     .then(function(new_goal) {
@@ -874,6 +896,7 @@ Home_Tab.prototype.save_current = function() {
     current_goal.recurrence_time_unit = recurrence_time_unit;
     current_goal.recurrence_rate = recurrence_rate;
     current_goal.is_recurrence_fixed = this.recurrence_fixed_checkbox.checked;
+    current_goal.is_organized = true;
 
     return this.datastore.update_goal(current_goal._id, current_goal)
     .then(function() {
@@ -921,11 +944,14 @@ Home_Tab.prototype.set_active_clicked = function() {
     if(current_goal.is_active) {
 
       current_goal.is_active = false;
-      this.set_active_button.innerHTML = "Make Active";
-      return this.datastore.update_goal(current_goal._id, current_goal);
+      this.set_active_button.innerHTML = "Set Active";
+      return this.datastore.update_goal(current_goal._id, current_goal)
+      .then(function(goal) {
+        return this.update_goal_button(goal);
+      }.bind(this));
     }
 
-    this.set_active_button.innerHTML = "Make Inactive";
+    this.set_active_button.innerHTML = "Set Inactive";
 
     var update_promises = [];
 
@@ -937,13 +963,19 @@ Home_Tab.prototype.set_active_clicked = function() {
       active_goal.is_active = false;
 
       update_promises.push(this.datastore.update_goal(active_goal._id,
-        active_goal));
+        active_goal)
+      .then(function(goal) {
+        return this.update_goal_button(goal);
+      }.bind(this)));
     }
 
     current_goal.is_active = true;
 
     update_promises.push(this.datastore.update_goal(current_goal._id,
-      current_goal));
+      current_goal)
+    .then(function(goal) {
+      return this.update_goal_button(goal);
+    }.bind(this)));
 
     return Promise.all(update_promises);
 
@@ -952,6 +984,82 @@ Home_Tab.prototype.set_active_clicked = function() {
 
   return promise;
 
+};
+
+Home_Tab.prototype.update_goal_button = function(goal) {
+
+  if(!this.goal_buttons_by_id.hasOwnProperty(goal._id)) {
+    return;
+  }
+
+  var goal_button = this.goal_buttons_by_id[goal._id];
+
+  while(goal_button.firstChild) {
+    goal_button.removeChild(
+      goal_button.firstChild);
+  }
+
+  let goal_container = document.createElement("div");
+  goal_container.className = "row no-gutters";
+
+  let goal_name_div = document.createElement("div");
+
+  if(goal._id in this.parent_goal_id_set) {
+    goal_name_div.className = "col-10 no-gutters";
+  }
+  else {
+    goal_name_div.className = "col-12 no-gutters";
+  }
+
+  if(goal._id === this.current_goal_id) {
+    goal_button.className = "btn active btn-outline-primary btn-lg " +
+      "btn-block no-gutters";
+    goal_button.setAttribute("aria-pressed", true);
+  }
+  else if(goal.is_active) {
+    goal_button.className = "btn btn-success btn-lg btn-block " +
+      "no-gutters";
+  }
+  else if(!goal.is_organized) {
+    goal_button.className = "btn btn-info btn-lg btn-block " +
+      "no-gutters";
+  }
+  else {
+    goal_button.className = "btn btn-outline-primary btn-lg " +
+      "btn-block no-gutters";
+  }
+
+  goal_name_div.innerHTML = goal.name;
+
+  goal_name_div.setAttribute("width", "100%");
+
+  // Allow text wrapping
+  goal_name_div.style["white-space"] = "normal";
+
+  goal_button.addEventListener(
+    "click", this.goal_clicked.bind(this, goal._id));
+
+  goal_container.appendChild(goal_name_div);
+
+  if(goal._id in this.parent_goal_id_set) {
+
+    let goal_expand_button_div = document.createElement("div");
+    goal_expand_button_div.className = "col-2 no-gutters";
+
+    let goal_expand_button = document.createElement("img");
+    goal_expand_button.src = "images/noun_Arrow_1743494.svg";
+    goal_expand_button.className = "no-gutters";
+    goal_expand_button.setAttribute("width", "100%");
+
+    goal_expand_button.addEventListener(
+      "click", this.filter_by_goal_clicked.bind(this, goal._id));
+
+    goal_expand_button_div.appendChild(goal_expand_button);
+
+    goal_container.appendChild(goal_expand_button_div);
+  }
+
+  goal_button.appendChild(goal_container);
 };
 
 Home_Tab.prototype.update_goals_table = function() {
@@ -1034,18 +1142,21 @@ Home_Tab.prototype.update_goals_table = function() {
 
     let goal = this.goals[goal_index];
 
+    // If this goal should not be displayed, ignore it
     if(!this.is_goal_in_filter(goal)) {
       continue;
     }
 
     let status_div = null;
 
+    // If this goal has an explicit status, we use it
     if(goal.status_id in this.status_divs_by_id) {
       status_div = this.status_divs_by_id[goal.status_id];
     }
     else if(goal.target_date === null) {
       continue;
     }
+    // Otherwise we deduce the goal's status by its target date
     else {
 
       let goal_target_date = new Date(goal.target_date);
@@ -1072,25 +1183,11 @@ Home_Tab.prototype.update_goals_table = function() {
       continue;
     }
 
-    let goal_button = document.createElement("button");
-    goal_button.className = "btn btn-outline-primary btn-lg btn-block";
-
-    if(goal._id === this.current_goal_id) {
-      goal_button.className = "btn btn-outline-primary btn-lg btn-block active";
-      goal_button.setAttribute("aria-pressed", true);
-    }
-    else if(goal.is_active) {
-      goal_button.className = "btn btn-success btn-lg btn-block";
-    }
-
-    goal_button.setAttribute("width", "100%");
-    goal_button.innerHTML = goal.name;
-    // Allow text wrapping
-    goal_button.style["white-space"] = "normal";
-    goal_button.addEventListener(
-      "click", this.goal_clicked.bind(this, goal._id));
+    let goal_button = document.createElement("div");
 
     this.goal_buttons_by_id[goal._id] = goal_button;
+
+    this.update_goal_button(goal);
 
     status_div.appendChild(goal_button);
   }
@@ -1108,10 +1205,15 @@ Home_Tab.prototype.goal_clicked = function(goal_id) {
       let goal_button = this.goal_buttons_by_id[this.current_goal_id];
 
       if(current_goal.is_active) {
-        goal_button.className = "btn btn-success btn-lg btn-block";
+        goal_button.className = "btn btn-success btn-lg btn-block no-gutters";
+      }
+      else if(!current_goal.is_organized) {
+        goal_button.className = "btn btn-info btn-lg btn-block " +
+          "no-gutters";
       }
       else {
-        goal_button.className = "btn btn-outline-primary btn-lg btn-block";
+        goal_button.className = "btn btn-outline-primary btn-lg btn-block " + 
+          "no-gutters";
       }
 
       goal_button.setAttribute("aria-pressed", false);
@@ -1119,6 +1221,7 @@ Home_Tab.prototype.goal_clicked = function(goal_id) {
   }
 
   this.new_subgoal_button.classList.remove("invisible");
+  this.set_organized_button.classList.remove("invisible");
   
   this.current_goal_id = goal_id;
   let current_goal = this.goal_id_map[goal_id];
@@ -1151,10 +1254,10 @@ Home_Tab.prototype.goal_clicked = function(goal_id) {
   }
 
   if(current_goal.is_active) {
-    this.set_active_button.innerHTML = "Make Inactive";
+    this.set_active_button.innerHTML = "Set Inactive";
   }
   else {
-    this.set_active_button.innerHTML = "Make Active";
+    this.set_active_button.innerHTML = "Set Active";
   }
 
   if(current_goal.recurrence_rate === null) {
@@ -1162,6 +1265,13 @@ Home_Tab.prototype.goal_clicked = function(goal_id) {
   }
   else {
     this.recurrence_rate_field.value = current_goal.recurrence_rate;
+  }
+
+  if(current_goal.is_organized) {
+    this.set_organized_button.innerHTML = "Organize";
+  }
+  else {
+    this.set_organized_button.innerHTML = "Set Organized";
   }
 
   if(current_goal.recurrence_time_unit === null) {
@@ -1177,7 +1287,8 @@ Home_Tab.prototype.goal_clicked = function(goal_id) {
   this.recurrence_fixed_checkbox.checked = current_goal.is_recurrence_fixed;
 
   let goal_button = this.goal_buttons_by_id[goal_id];
-  goal_button.className = "btn btn-outline-primary btn-lg btn-block active";
+  goal_button.className = "btn btn-outline-primary btn-lg btn-block active " +
+    "no-gutters";
   goal_button.setAttribute("aria-pressed", true);
 };
 
@@ -1193,20 +1304,19 @@ Home_Tab.prototype.new_goal_clicked = function() {
   }
 
   this.current_goal_id = null;
-  // this.current_goal_id_field.value = "";
   this.current_goal_name_field.value = "";
   this.notes_field.value = "";
 
   this.new_subgoal_button.classList.add("invisible");
+  this.set_organized_button.classList.add("invisible");
 
   $("#current_goal_status_select").val(null).trigger("change");
 
   this.target_date_picker.setDate(null);
-  // this.due_date_picker.setDate(null);
   this.completed_date_picker.setDate(null);
 
   this.cancel_delete_button.innerHTML = "Cancel";
-  this.set_active_button.innerHTML = "Make active";
+  this.set_active_button.innerHTML = "Set Active";
 
   $("#parent_goals_select").val(null).trigger("change");
   this.recurrence_rate_field.value = null;
@@ -1226,11 +1336,22 @@ Home_Tab.prototype.new_subgoal_clicked = function() {
   }
 };
 
-Home_Tab.prototype.filter_by_current_clicked = function() {
+Home_Tab.prototype.filter_by_goal_clicked = function(parameter_1, parameter_2) {
 
-  if(this.current_goal_id !== null) {
+  if(parameter_2 === undefined) {
+    event = parameter_1;
+    goal_id = this.current_goal_id;
+  }
+  else {
+    event = parameter_2;
+    goal_id = parameter_1;
+  }
 
-    this.filter_goal_ids = [this.current_goal_id];
+  event.stopPropagation();
+
+  if(goal_id !== null) {
+
+    this.filter_goal_ids = [goal_id];
 
     $("#parent_goal_filter_select").val(this.filter_goal_ids).trigger("change");
   }
@@ -1282,6 +1403,10 @@ Home_Tab.prototype.is_goal_in_filter = function(goal, ignore_depth) {
     if(goal._id in this.parent_goal_id_set) {
       return false;
     }
+  }
+
+  if(this.hide_recurrent_checkbox.checked && goal.recurrence_rate !== null) {
+    return false;
   }
 
   if(this.filter_goal_ids.length < 1) {
@@ -1393,4 +1518,90 @@ Home_Tab.prototype.close_notes_button_clicked = function() {
 
 Home_Tab.prototype.save_notes_clicked = function() {
   $("#notes_modal").modal("hide");
+};
+
+Home_Tab.prototype.set_organized_clicked = function() {
+
+  if(this.current_goal_id === null) {
+    return Promise.resolve();
+  }
+
+  let current_goal = this.goal_id_map[this.current_goal_id];
+
+  if(current_goal.is_organized) {
+
+    var goals = [current_goal];
+    goals.push(...this.get_child_goals(current_goal, 1));
+
+    var promises = [];
+
+    for(var goal_index = 0; goal_index < goals.length; goal_index++) {
+
+      let goal = goals[goal_index];
+
+      // Look for recurring goals; we don't organize these
+      if(goal.parent_goal_ids.length === 1) {
+        let parent_goal = this.datastore.get_goal_by_id(goal.parent_goal_ids[0]);
+
+        if(parent_goal.recurrence_rate !== null) {
+          continue;
+        }
+      }
+      
+      goal.is_organized = false;
+
+      promises.push(
+        this.datastore.update_goal(goal._id, goal)
+        .then(function(goal) {
+          return this.update_goal_button(goal);
+        }.bind(this)));
+    }
+
+    return Promise.all(promises)
+    .then(function() {
+      this.set_organized_button.innerHTML = "Set Organized";
+    }.bind(this));
+  }
+  else {
+    current_goal.is_organized = true;
+    return this.datastore.update_goal(current_goal._id, current_goal)
+    .then(function(goal) {
+      this.set_organized_button.innerHTML = "Organize";
+      return this.update_goal_button(goal);
+    }.bind(this));
+  }
+
+};
+
+Home_Tab.prototype.get_child_goals = function(goal, max_depth, depth) {
+
+  var child_goals = [];
+
+  if(depth === undefined) {
+    depth = 1;
+  }
+
+  for(var goal_index = 0; goal_index < this.goals.length; goal_index++) {
+
+    let child_goal = this.goals[goal_index];
+
+    for(let parent_goal_index = 0;
+        parent_goal_index < child_goal.parent_goal_ids.length;
+        parent_goal_index++) {
+
+      let parent_goal = this.goal_id_map[
+        child_goal.parent_goal_ids[parent_goal_index]];
+
+      if(parent_goal._id === goal._id) {
+        child_goals.push(child_goal);
+
+        if(depth < max_depth) {
+          child_goals.push(...this.get_child_goals(child_goal, max_depth, depth + 1));
+        }
+      }
+    }
+
+  }
+
+  return child_goals;
 };

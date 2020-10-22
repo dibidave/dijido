@@ -31,5 +31,10 @@
     "key": "certificate_file_path",
     "value": "",
     "description": "The path to the certificate file (for SSL)"
+  },
+  {
+    "key": "end_of_day_offset",
+    "value": "6",
+    "description": "How many hours after the end of day is still considered 'today'"
   }
 ]

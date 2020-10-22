@@ -6,9 +6,6 @@ function Login_Pane(parent_div, connector) {
   this.login_div = document.createElement("div");
   this.login_div.className = "col-sm-4";
 
-  this.login_form = document.createElement("form");
-  this.login_fieldset = document.createElement("fieldset");
-
   this.username_div = document.createElement("div");
   this.username_div.className = "form-group";
 
@@ -20,7 +17,7 @@ function Login_Pane(parent_div, connector) {
   this.username_field.className = "form-control";
   this.username_div.appendChild(this.username_field);
 
-  this.login_fieldset.appendChild(this.username_div);
+  this.login_div.appendChild(this.username_div);
 
   this.password_div = document.createElement("div");
   this.password_div.className = "form-group";
@@ -36,7 +33,7 @@ function Login_Pane(parent_div, connector) {
 
   this.password_div.appendChild(this.password_field);
 
-  this.login_fieldset.appendChild(this.password_div);
+  this.login_div.appendChild(this.password_div);
 
   this.login_button = document.createElement("button");
   this.login_button.className = "btn btn-primary";
@@ -44,11 +41,8 @@ function Login_Pane(parent_div, connector) {
   this.login_button.addEventListener("click",
     this.login_button_clicked.bind(this));
 
-  this.login_fieldset.appendChild(this.login_button);
+  this.login_div.appendChild(this.login_button);
 
-  this.login_form.appendChild(this.login_fieldset);
-
-  this.login_div.appendChild(this.login_form);
   this.parent_div.appendChild(this.login_div);
 };
 
@@ -60,5 +54,6 @@ Login_Pane.prototype.login_button_clicked = function() {
     this.password_field.value)
   .then(function(response) {
     console.log(response);
+    location.reload();
   });
 };

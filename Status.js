@@ -33,6 +33,13 @@ exports.create_status = function(status_JSON) {
     status.max_time = null;
   }
 
+  if(status_JSON.hasOwnProperty("is_default")) {
+    status.is_default = status_JSON.is_default;
+  }
+  else {
+    status.is_default = false;
+  }
+
   var promise = status.save()
   .then(function() {
     return status;
@@ -41,7 +48,7 @@ exports.create_status = function(status_JSON) {
   return promise;
 };
 
-exports.get_statuses = function(user_id) {
+exports.get_statuses = function() {
 
   var promise = database.get_objects(collection_name)
   .then(function(results) {
@@ -64,3 +71,5 @@ exports.get_statuses = function(user_id) {
 
   return promise;
 };
+
+exports.collection_name = collection_name;

@@ -5,6 +5,9 @@ var Datastore = function(connector) {
   this.goals = [];
   this.goal_id_map = {};
   this.statuses = [];
+  this.notes = [];
+  this.note_id_map = {};
+  this.config = {};
 };
 
 Datastore.prototype.sync = function() {
@@ -36,8 +39,16 @@ Datastore.prototype.sync = function() {
   ).then(this.connector.get_statuses)
   .then(function(server_statuses) {
     this.statuses = server_statuses;
+  }.bind(this)
+  ).then(this.connector.get_notes)
+  .then(function(server_notes) {
+    this.notes = server_notes;
+    this.sort_notes();
+  }.bind(this)
+  ).then(this.connector.get_config)
+  .then(function(config) {
+    this.config = config;
   }.bind(this));
-
 };
 
 Datastore.prototype.get_parent_goals = function() {
@@ -87,9 +98,13 @@ Datastore.prototype.get_goals = function() {
   return Promise.resolve(this.goals);
 };
 
+Datastore.prototype.get_notes = function() {
+  return Promise.resolve(this.notes);
+};
+
 Datastore.prototype.get_goal_by_id = function(goal_id) {
 
-  if(goal_id in this.goals) {
+  if(goal_id in this.goal_id_map) {
     return this.goal_id_map[goal_id];
   }
   else {
@@ -99,6 +114,22 @@ Datastore.prototype.get_goal_by_id = function(goal_id) {
       this.goal_id_map[goal._id] = goal;
 
       return goal;
+    }.bind(this));
+  }
+};
+
+Datastore.prototype.get_note_by_id = function(note_id) {
+
+  if(note_id in this.note_id_map) {
+    return this.note_id_map[note_id];
+  }
+  else {
+    return this.connector.get_note(note_id)
+    .then(function(note) {
+      this.notes.push(note);
+      this.note_id_map[note._id] = note;
+
+      return note;
     }.bind(this));
   }
 };
@@ -119,8 +150,24 @@ Datastore.prototype.delete_goal = function(goal_id) {
   }.bind(this, goal_id))
 };
 
-Datastore.prototype.update_goal = function(goal_id, goal) {
+Datastore.prototype.delete_note = function(note_id) {
 
+  return this.connector.delete_note(note_id)
+  .then(function(note_id) {
+    
+    for(var note_index = 0; note_index < this.notes.length; note_index++) {
+      if(this.notes[note_index]._id == note_id) {
+        this.notes.splice(note_index, 1);
+        break;
+      }
+    }
+
+    delete this.note_id_map[note_id];
+  }.bind(this, note_id))
+};
+
+Datastore.prototype.update_goal = function(goal_id, goal) {
+  
   return this.connector.put_goal(goal_id, goal)
   .then(function(goal) {
     
@@ -132,6 +179,26 @@ Datastore.prototype.update_goal = function(goal_id, goal) {
     }
 
     this.goal_id_map[goal._id] = goal;
+    this.sort_goals();
+
+    return goal;
+  }.bind(this));
+};
+
+Datastore.prototype.update_note = function(note_id, note) {
+  
+  return this.connector.put_goal(note_id, note)
+  .then(function(note) {
+    
+    for(var note_index = 0; note_index < this.notes.length; note_index++) {
+      if(this.notes[note_index]._id == note._id) {
+        this.notes[note_index] = note;
+        break;
+      }
+    }
+
+    this.note_id_map[note._id] = note;
+    this.sort_notes();
   }.bind(this));
 };
 
@@ -145,6 +212,31 @@ Datastore.prototype.add_goal = function(goal) {
   .then(function(goal) {
     this.goals.push(goal);
     this.goal_id_map[goal._id] = goal;
+    this.sort_goals();
   }.bind(this));
 
+};
+
+Datastore.prototype.add_note = function(note) {
+
+  return this.connector.post_note(note)
+  .then(function(note) {
+    this.notes.push(note);
+    this.note_id_map[note._id] = note;
+    this.sort_notes();
+  }.bind(this));
+
+};
+
+Datastore.prototype.sort_goals = function() {
+
+  this.goals.sort((a, b) => (a.target_date > b.target_date) ? 1 :
+    (a.target_date === b.target_date) ? ((a.name > b.name) ? 1 : -1) : -1);
+  
+};
+
+Datastore.prototype.sort_notes = function() {
+
+  this.notes.sort((a, b) => (a.date < b.date) ? 1 : -1);
+  
 };

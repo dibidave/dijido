@@ -26,14 +26,13 @@ function post_URL(URL, data) {
   var promise = new Promise(function(resolve, reject) {
     $.ajax({
       type: 'post',
-      dataType: 'json',
       contentType: 'application/json; charset=UTF-8',
       url: URL,
       data: data_JSON,
       error: function(jqXHR, status, error) {
         return reject(error);
       },
-      success: function(response) {
+      success: function(response, text_status) {
         return resolve(response);
       }
     });
@@ -186,6 +185,78 @@ Connector.prototype.post_login = function(username, password) {
     username: username,
     password: password
   }).then(function(response) {
+    return response;
+  });
+
+  return promise;
+};
+
+Connector.prototype.get_notes = function() {
+
+  var URL = this.base_URL + "/notes";
+
+  var promise = get_URL(URL)
+    .then(function(response) {
+      return response.notes;
+    });
+
+  return promise;
+};
+
+Connector.prototype.get_config = function() {
+
+  var URL = this.base_URL + "/config";
+
+  var promise = get_URL(URL)
+    .then(function(response) {
+      return response.config;
+    });
+
+  return promise;
+};
+
+Connector.prototype.get_note = function(note_id) {
+  
+  var URL = this.base_URL + "/notes/?_id=" + note_id;
+
+  var promise = get_URL(URL)
+    .then(function(response) {
+      return response.notes[0];
+    });
+
+  return promise;
+
+};
+
+Connector.prototype.post_note = function(note) {
+  var URL = this.base_URL + "/notes";
+
+  var promise = post_URL(URL, note)
+    .then(function(response) {
+      return response.note;
+    });
+
+  return promise;
+};
+
+Connector.prototype.put_note = function(note_id, note) {
+
+  var URL = this.base_URL + "/notes/" + note_id;
+
+  var promise = put_URL(URL, note)
+  .then(function(response) {
+    return response;
+  });
+
+  return promise;
+};
+
+Connector.prototype.delete_note = function(note_id) {
+
+  var URL = this.base_URL + "/notes/" + note_id;
+
+  var promise = delete_URL(URL)
+  .then(function(response) {
     return response;
   });
 

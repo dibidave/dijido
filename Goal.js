@@ -114,6 +114,13 @@ exports.create_goal = function(goal_JSON) {
     goal.recurrence_time_unit = null;
   }
 
+  if(goal_JSON.hasOwnProperty("is_organized")) {
+    goal.is_organized = goal_JSON.is_organized;
+  }
+  else {
+    goal.is_organized = true;
+  }
+
   var promise = goal.save()
   .then(function() {
     return goal;
@@ -140,7 +147,8 @@ exports.get_goal_by_id = function(goal_id) {
 
 exports.get_goals = function(filter) {
 
-  var promise = database.get_objects(collection_name, filter, {target_date: 1})
+  var promise = database.get_objects(collection_name, filter,
+    {target_date: 1, name: 1})
   .then(function(results) {
 
     var goals = [];
