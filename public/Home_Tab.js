@@ -493,6 +493,8 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
 
   this.current_goal_id = null;
 
+  this.update_goals_timer = null;
+
   this.filter_goal_ids = [];
 
   this.update_statuses()
@@ -627,6 +629,10 @@ Home_Tab.prototype.update_statuses = function() {
 
 Home_Tab.prototype.update_goals = function() {
 
+  if(this.update_goals_timer !== null) {
+    clearTimeout(this.update_goals_timer);
+  }
+
   return this.datastore.get_goals()
   .then(function(goals) {
 
@@ -698,6 +704,9 @@ Home_Tab.prototype.update_goals = function() {
 
     this.update_goals_table();
 
+  }.bind(this)
+  ).then(function() {
+    setTimeout(this.update_goals.bind(this), 10000);
   }.bind(this));
 };
 
@@ -1189,7 +1198,7 @@ Home_Tab.prototype.update_goals_table = function() {
     if(status_div === null) {
       continue;
     }
-    
+
     if(this.next_goal_id === goal._id) {
       let bar_thing = document.createElement("hr");
       status_div.appendChild(bar_thing);
