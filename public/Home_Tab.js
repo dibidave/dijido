@@ -639,11 +639,17 @@ Home_Tab.prototype.update_goals = function() {
     this.goal_id_map = {};
     this.active_goal_ids = [];
     this.parent_goal_id_set = {};
+    this.next_goal_id = null;
+    let time_now = new Date();
 
     for(var goal_index = 0; goal_index < this.goals.length;
       goal_index++) {
 
       let goal = this.goals[goal_index];
+
+      if(goal.target_date !== null && time_now < new Date(goal.target_date)) {
+        this.next_goal_id = goal._id;
+      }
 
       for(let parent_goal_index = 0;
         parent_goal_index < goal.parent_goal_ids.length;
@@ -1156,6 +1162,7 @@ Home_Tab.prototype.update_goals_table = function() {
     else if(goal.target_date === null) {
       continue;
     }
+
     // Otherwise we deduce the goal's status by its target date
     else {
 
@@ -1181,6 +1188,11 @@ Home_Tab.prototype.update_goals_table = function() {
 
     if(status_div === null) {
       continue;
+    }
+    
+    if(this.next_goal_id === goal._id) {
+      let bar_thing = document.createElement("hr");
+      status_div.appendChild(bar_thing);
     }
 
     let goal_button = document.createElement("div");
