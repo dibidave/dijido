@@ -646,8 +646,8 @@ Home_Tab.prototype.update_goals = function() {
       goal_index++) {
 
       let goal = this.goals[goal_index];
-
-      if(goal.target_date !== null && time_now < new Date(goal.target_date)) {
+      
+      if(this.next_goal_id === null && goal.completed_on === null && goal.abandoned_on === null && goal.target_date !== null && time_now < new Date(goal.target_date)) {
         this.next_goal_id = goal._id;
       }
 
