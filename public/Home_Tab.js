@@ -286,8 +286,26 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
   this.active_statuses_dropdown.id = "active_statuses_select";
 
   this.active_statuses_row.appendChild(this.active_statuses_dropdown);
-
   this.grid_filter_div.appendChild(this.active_statuses_row);
+
+  this.in_planning_mode = false;
+
+  this.planning_mode_row = document.createElement("div");
+  this.planning_mode_row.className = "row justify-content-center";
+
+  this.planning_mode_button_column = document.createElement("div");
+  this.planning_mode_button_column.className = "col col-md-auto";
+
+  this.planning_mode_button = document.createElement("button");
+  this.planning_mode_button.className = "btn btn-secondary";
+  this.planning_mode_button.innerHTML = "Switch to Planning Mode";
+
+  this.planning_mode_button.addEventListener("click",
+    this.planning_mode_clicked.bind(this));
+
+  this.planning_mode_button_column.appendChild(this.planning_mode_button);
+  this.planning_mode_row.appendChild(this.planning_mode_button_column);
+  this.grid_filter_div.appendChild(this.planning_mode_row);
 
   this.parent_goal_filter_row = document.createElement("div");
   this.parent_goal_filter_row.className = "row justify-content-center";
@@ -375,13 +393,13 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
   this.additional_filter_options_row.className = "row justify-content-center";
 
   this.hide_non_leaf_div = document.createElement("div");
-  this.hide_non_leaf_div.className = "col-md-4 form-check";
+  this.hide_non_leaf_div.className = "col-md-3 form-check";
 
   this.hide_non_leaf_checkbox = document.createElement("input");
   this.hide_non_leaf_checkbox.id = "hide_non_leaf_checkbox";
   this.hide_non_leaf_checkbox.className = "form-check-input";
   this.hide_non_leaf_checkbox.setAttribute("type", "checkbox");
-  this.hide_non_leaf_checkbox.checked = false;
+  this.hide_non_leaf_checkbox.checked = true;
   this.hide_non_leaf_checkbox.addEventListener("click",
     this.parent_filters_changed.bind(this));
 
@@ -395,9 +413,32 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
   this.hide_non_leaf_div.appendChild(this.hide_non_leaf_label);
 
   this.additional_filter_options_row.appendChild(this.hide_non_leaf_div);
+  
+  this.hide_leaf_div = document.createElement("div");
+  this.hide_leaf_div.className = "col-md-3 form-check";
+
+  this.hide_leaf_checkbox = document.createElement("input");
+  this.hide_leaf_checkbox.id = "hide_leaf_checkbox";
+  this.hide_leaf_checkbox.className = "form-check-input";
+  this.hide_leaf_checkbox.setAttribute("type", "checkbox");
+  this.hide_leaf_checkbox.checked = false;
+  this.hide_leaf_checkbox.addEventListener("click",
+    this.parent_filters_changed.bind(this));
+
+  this.hide_leaf_div.appendChild(this.hide_leaf_checkbox);
+
+  this.hide_leaf_label = document.createElement("label");
+  this.hide_leaf_label.innerHTML = "Hide Leaves";
+  this.hide_leaf_label.className = "form-check-label text-nowrap";
+  this.hide_leaf_label.setAttribute("for", "hide_leaf_checkbox");
+
+  this.hide_leaf_div.appendChild(this.hide_leaf_label);
+
+  this.additional_filter_options_row.appendChild(this.hide_leaf_div);
+
 
   this.hide_recurrent_div = document.createElement("div");
-  this.hide_recurrent_div.className = "col-md-4 form-check";
+  this.hide_recurrent_div.className = "col-md-3 form-check";
 
   this.hide_recurrent_checkbox = document.createElement("input");
   this.hide_recurrent_checkbox.id = "hide_recurrent_checkbox";
@@ -420,7 +461,7 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
 
   this.grid_filter_div.appendChild(this.additional_filter_options_row);
 
-  // Add the filter dive to the page header
+  // Add the filter div to the page header
   this.grid_header_row.appendChild(this.grid_filter_div);
 
   this.tab_content.appendChild(this.grid_header_row);
@@ -647,6 +688,7 @@ Home_Tab.prototype.update_goals = function() {
     this.parent_goal_id_set = {};
     this.next_goal_id = null;
     let time_now = new Date();
+    this.child_goal_id_lookup = {};
 
     for(var goal_index = 0; goal_index < this.goals.length;
       goal_index++) {
@@ -661,7 +703,16 @@ Home_Tab.prototype.update_goals = function() {
         parent_goal_index < goal.parent_goal_ids.length;
         parent_goal_index++) {
 
-        this.parent_goal_id_set[goal.parent_goal_ids[parent_goal_index]] = 1;
+        let parent_goal_id = goal.parent_goal_ids[parent_goal_index];
+
+        this.parent_goal_id_set[parent_goal_id] = 1;
+        
+        if(parent_goal_id in this.child_goal_id_lookup) {
+          this.child_goal_id_lookup[parent_goal_id].push(goal._id);
+        }
+        else {
+          this.child_goal_id_lookup[parent_goal_id] = [goal._id];
+        }
       }
 
       this.goal_id_map[goal._id] = goal;
@@ -706,7 +757,7 @@ Home_Tab.prototype.update_goals = function() {
 
   }.bind(this)
   ).then(function() {
-    setTimeout(this.update_goals.bind(this), 10000);
+    setTimeout(this.update_goals.bind(this), 300000);
   }.bind(this));
 };
 
@@ -858,8 +909,7 @@ Home_Tab.prototype.save_current = function() {
 
   // TODO: allow it if they don't conflict
   if(selected_status_id !== null && target_date !== null) {
-    alert("Can't specify both a target date and a status!");
-    return Promise.reject();
+    selected_status_id = null;
   }
 
   // Find the target date given this status
@@ -1357,6 +1407,54 @@ Home_Tab.prototype.new_subgoal_clicked = function() {
   }
 };
 
+Home_Tab.prototype.planning_mode_clicked = function() {
+
+  let new_status_ids = [];
+  let num_statuses_displayed = 0;
+
+  if(this.in_planning_mode) {
+    this.hide_recurrent_checkbox.checked = true;
+    this.parent_goal_recursive_checkbox.checked = true;
+    this.hide_non_leaf_checkbox.checked = true;
+    this.hide_leaf_checkbox.checked = false;
+  }
+  else {
+    this.hide_recurrent_checkbox.checked = false;
+    this.parent_goal_recursive_checkbox.checked = false;
+    this.hide_non_leaf_checkbox.checked = false;
+    this.hide_leaf_checkbox.checked = false;
+  }
+
+  for(var status_index = 0; status_index < this.statuses.length;
+    status_index++) {
+
+    var status = this.statuses[status_index];
+
+    if(this.in_planning_mode) {
+
+      if(status.is_default && num_statuses_displayed < MAX_COLUMNS) {
+        new_status_ids.push(status._id);
+        num_statuses_displayed++;
+      }
+
+      this.planning_mode_button.innerHTML = "Switch to Planning Mode";
+    }
+    else {
+      
+      if(status.is_planning && num_statuses_displayed < MAX_COLUMNS) {
+        new_status_ids.push(status._id);
+        num_statuses_displayed++;
+      }
+
+      this.planning_mode_button.innerHTML = "Switch to Execution Mode"; 
+    }
+  }
+  
+  this.in_planning_mode = !this.in_planning_mode;
+
+  $("#active_statuses_select").val(new_status_ids).trigger("change");
+}
+
 Home_Tab.prototype.filter_by_goal_clicked = function(parameter_1, parameter_2) {
 
   if(parameter_2 === undefined) {
@@ -1417,6 +1515,10 @@ Home_Tab.prototype.is_goal_in_filter = function(goal, ignore_depth) {
   }
 
   if(goal.completed_on !== null || goal.abandoned_on !== null) {
+    return false;
+  }
+
+  if(this.hide_leaf_checkbox.checked && !(goal._id in this.child_goal_id_lookup)) {
     return false;
   }
 
@@ -1549,48 +1651,44 @@ Home_Tab.prototype.set_organized_clicked = function() {
 
   let current_goal = this.goal_id_map[this.current_goal_id];
 
-  if(current_goal.is_organized) {
+  var goals = [current_goal];
+  goals.push(...this.get_child_goals(current_goal, 1));
 
-    var goals = [current_goal];
-    goals.push(...this.get_child_goals(current_goal, 1));
+  var is_organized = current_goal.is_organized;
 
-    var promises = [];
+  var promises = [];
 
-    for(var goal_index = 0; goal_index < goals.length; goal_index++) {
+  for(var goal_index = 0; goal_index < goals.length; goal_index++) {
 
-      let goal = goals[goal_index];
+    let goal = goals[goal_index];
 
-      // Look for recurring goals; we don't organize these
-      if(goal.parent_goal_ids.length === 1) {
-        let parent_goal = this.datastore.get_goal_by_id(goal.parent_goal_ids[0]);
+    // Look for recurring goals; we don't organize these
+    if(goal.parent_goal_ids.length === 1) {
+      let parent_goal = this.datastore.get_goal_by_id(goal.parent_goal_ids[0]);
 
-        if(parent_goal.recurrence_rate !== null) {
-          continue;
-        }
+      if(parent_goal.recurrence_rate !== null) {
+        continue;
       }
-      
-      goal.is_organized = false;
-
-      promises.push(
-        this.datastore.update_goal(goal._id, goal)
-        .then(function(goal) {
-          return this.update_goal_button(goal);
-        }.bind(this)));
     }
+      
+    goal.is_organized = !is_organized;
 
-    return Promise.all(promises)
-    .then(function() {
+    promises.push(
+      this.datastore.update_goal(goal._id, goal)
+      .then(function(goal) {
+        return this.update_goal_button(goal);
+      }.bind(this)));
+  }
+
+  return Promise.all(promises)
+  .then(function() {
+    if(is_organized) {
       this.set_organized_button.innerHTML = "Set Organized";
-    }.bind(this));
-  }
-  else {
-    current_goal.is_organized = true;
-    return this.datastore.update_goal(current_goal._id, current_goal)
-    .then(function(goal) {
+    }
+    else {
       this.set_organized_button.innerHTML = "Organize";
-      return this.update_goal_button(goal);
-    }.bind(this));
-  }
+    }
+  }.bind(this));
 
 };
 
@@ -1602,26 +1700,21 @@ Home_Tab.prototype.get_child_goals = function(goal, max_depth, depth) {
     depth = 1;
   }
 
-  for(var goal_index = 0; goal_index < this.goals.length; goal_index++) {
+  if(goal._id in this.child_goal_id_lookup) {
 
-    let child_goal = this.goals[goal_index];
+    for(var child_goal_index = 0; child_goal_index < this.child_goal_id_lookup[goal._id].length; child_goal_index++) {
 
-    for(let parent_goal_index = 0;
-        parent_goal_index < child_goal.parent_goal_ids.length;
-        parent_goal_index++) {
-
-      let parent_goal = this.goal_id_map[
-        child_goal.parent_goal_ids[parent_goal_index]];
-
-      if(parent_goal._id === goal._id) {
+      let child_goal_id = this.child_goal_id_lookup[goal._id][child_goal_index];
+      let child_goal = this.goal_id_map[child_goal_id];
+      
+      if(child_goal.abandoned_on === null) {
         child_goals.push(child_goal);
+      }
 
-        if(depth < max_depth) {
-          child_goals.push(...this.get_child_goals(child_goal, max_depth, depth + 1));
-        }
+      if(max_depth === undefined || depth < max_depth) {
+        child_goals.push(...this.get_child_goals(child_goal, max_depth, depth + 1));
       }
     }
-
   }
 
   return child_goals;

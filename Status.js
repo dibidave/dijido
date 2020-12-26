@@ -40,6 +40,13 @@ exports.create_status = function(status_JSON) {
     status.is_default = false;
   }
 
+  if(status_JSON.hasOwnProperty("is_planning")) {
+    status.is_planning = status_JSON.is_planning;
+  }
+  else {
+    status.is_planning = false;
+  }
+
   var promise = status.save()
   .then(function() {
     return status;
