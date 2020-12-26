@@ -121,6 +121,13 @@ exports.create_goal = function(goal_JSON) {
     goal.is_organized = true;
   }
 
+  if(goal_JSON.hasOwnProperty("notes")) {
+    goal.notes = goal_JSON.notes;
+  }
+  else {
+    goal.notes = null;
+  }
+
   var promise = goal.save()
   .then(function() {
     return goal;
