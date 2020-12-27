@@ -1081,6 +1081,8 @@ Home_Tab.prototype.update_goal_button = function(goal) {
 
   let goal_container = document.createElement("div");
   goal_container.className = "row no-gutters";
+  goal_container.style["overflow-y"] = "hidden";
+  goal_container.style["overflow-x"] = "hidden";
 
   let goal_name_div = document.createElement("div");
 
