@@ -739,6 +739,7 @@ Home_Tab.prototype.update_goals = function() {
 
       if(goal.is_active) {
         this.active_goal_ids.push(goal._id);
+        console.log(goal.name, " is active");
       }
 
       if(goal.completed_on !== null || goal.abandoned_on !== null) {
@@ -1005,7 +1006,17 @@ Home_Tab.prototype.cancel_delete_clicked = function() {
       return;
     }
 
-    this.datastore.delete_goal(current_goal._id)
+    var promise = Promise.resolve();
+
+    if(current_goal.is_active) {
+      promise = promise.then(function() {
+        return this.set_active_clicked();
+      }.bind(this));
+    }
+
+    promise = promise.then(function() {
+      return this.datastore.delete_goal(current_goal._id)
+    }.bind(this))
     .then(function() {
       this.new_goal_clicked();
       return this.update_goals();
@@ -1035,7 +1046,23 @@ Home_Tab.prototype.set_active_clicked = function() {
 
       current_goal.is_active = false;
       this.set_active_button.innerHTML = "Set Active";
-      return this.datastore.update_goal(current_goal._id, current_goal)
+
+      return this.datastore.get_unfinished_activity_by_goal_id(current_goal._id)
+      .then(function(activities) {
+
+        if(activities.length === 0) {
+           alert("Something went wrong saving activity end, check logs.");
+           return;
+        }
+        else {
+          let activity = activities[0];
+          activity.end_time = new Date();
+          return this.datastore.update_activity(activity._id, activity);
+        }
+      }.bind(this))
+      .then(function(current_goal) {
+        return this.datastore.update_goal(current_goal._id, current_goal);
+      }.bind(this, current_goal))
       .then(function(goal) {
         return this.update_goal_button(goal);
       }.bind(this));
@@ -1052,6 +1079,19 @@ Home_Tab.prototype.set_active_clicked = function() {
 
       active_goal.is_active = false;
 
+      update_promises.push(this.datastore.get_unfinished_activity_by_goal_id(active_goal._id)
+      .then(function(activities) {
+        if(activities.length === 0) {
+           alert("Something went wrong saving activity end, check logs.");
+           return;
+        }
+        else {
+          let activity = activities[0];
+          activity.end_time = new Date();
+          return this.datastore.update_activity(activity._id, activity);
+        }
+      }.bind(this)));
+
       update_promises.push(this.datastore.update_goal(active_goal._id,
         active_goal)
       .then(function(goal) {
@@ -1060,6 +1100,13 @@ Home_Tab.prototype.set_active_clicked = function() {
     }
 
     current_goal.is_active = true;
+    
+    let activity = {};
+    activity.goal_id = current_goal._id;
+    activity.start_time = new Date();
+    activity.end_time = null;
+    
+    update_promises.push(this.datastore.add_activity(activity));
 
     update_promises.push(this.datastore.update_goal(current_goal._id,
       current_goal)
@@ -1610,9 +1657,21 @@ Home_Tab.prototype.complete_clicked = function() {
     return;
   }
 
+  let current_goal = this.goal_id_map[this.current_goal_id];
+
+  var promise = Promise.resolve();
+
+  if(current_goal.is_active) {
+    promise = promise.then(function() {
+      return this.set_active_clicked();
+    }.bind(this));
+  }
+
   this.completed_date_picker.setDate(new Date());
 
-  return this.save_clicked()
+  return promise.then(function() {
+    return this.save_clicked();
+  }.bind(this))
   .then(function() {
     return this.new_goal_clicked();
   }.bind(this));
@@ -1623,10 +1682,22 @@ Home_Tab.prototype.abandon_clicked = function() {
   if(this.current_goal_id === null) {
     return;
   }
+  
+  let current_goal = this.goal_id_map[this.current_goal_id]; 
+
+  var promise = Promise.resolve();
+
+  if(current_goal.is_active) {
+    promise = promise.then(function() {
+      return this.set_active_clicked();
+    }.bind(this));
+  }
 
   this.abandoned_date_picker.setDate(new Date());
 
-  return this.save_clicked()
+  return promise.then(function() {
+    return this.save_clicked();
+  }.bind(this))
   .then(function() {
     return this.new_goal_clicked();
   }.bind(this));

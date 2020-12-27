@@ -7,6 +7,7 @@ var path = require("path");
 var Goal = require("./Goal");
 var Note = require("./Note");
 var Status = require("./Status");
+var Activity = require("./Activity");
 var moment = require("moment");
 var config = require("./config/config");
 
@@ -58,6 +59,14 @@ var post_status = function(request, response) {
   });
 };
 
+var post_activity = function(request, response) {
+
+  Activity.create_activity(request.body)
+  .then(function(activity) {
+    return response.json({activity: activity});
+  });
+};
+
 var get_goals = function(request, response) {
 
   var filter = {};
@@ -94,6 +103,99 @@ var get_goals = function(request, response) {
   });
 };
 
+var get_logs = function(request, response) {
+
+  var age = 30;
+
+  if("age" in request.query) {
+    age = request.query["age"];
+  }
+
+  var earliest_date = moment().clone().subtract(age, "days");
+
+  let completed_filter = {};
+  completed_filter.completed_on = {
+    "$gt": earliest_date.toDate()
+  };
+
+  let abandoned_filter = {};
+  abandoned_filter.abandoned_on = {
+    "$gt": earliest_date.toDate()
+  };
+
+  let activity_start_filter = {};
+  activity_start_filter.start_time = {
+    "$gt": earliest_date.toDate()
+  };
+
+  let activity_end_filter = {};
+  activity_end_filter.end_time = {
+    "$gt": earliest_date.toDate()
+  };
+
+  Promise.all([
+    Goal.get_goals(completed_filter),
+    Goal.get_goals(abandoned_filter),
+    Activity.get_activities(activity_start_filter),
+    Activity.get_activities(activity_end_filter)
+  ]).then(function(results) {
+
+    completed_goals = results[0];
+    abandoned_goals = results[1];
+    started_activities = results[2];
+    ended_activities = results[3];
+    
+    var logs = [];
+
+    for(var goal_index = 0; goal_index < completed_goals.length;
+      goal_index++) {
+
+      var log = {};
+      log.date = completed_goals[goal_index].completed_on;
+      log.text = completed_goals[goal_index].name;
+      log.type = "Completed";
+
+      logs.push(log);
+    }
+    
+    for(var goal_index = 0; goal_index < abandoned_goals.length;
+      goal_index++) {
+
+      var log = {};
+      log.date = abandoned_goals[goal_index].abandoned_on;
+      log.text = abandoned_goals[goal_index].name;
+      log.type = "Abandoned";
+
+      logs.push(log);
+    }
+    
+    for(var activity_index = 0; activity_index < started_activities.length;
+      activity_index++) {
+
+      var log = {};
+      log.date = started_activities[activity_index].start_time;
+      log.text = started_activities[activity_index].goal_id;
+      log.type = "Started";
+
+      logs.push(log);
+    }
+
+    for(var activity_index = 0; activity_index < ended_activities.length;
+      activity_index++) {
+
+      var log = {};
+      log.date = ended_activities[activity_index].end_time;
+      log.text = ended_activities[activity_index].goal_id;
+      log.type = "Stopped";
+
+      logs.push(log);
+    }
+
+    return response.json({logs: logs});
+
+  });
+};
+
 var get_statuses = function(request, response) {
 
   Status.get_statuses()
@@ -110,6 +212,42 @@ var get_statuses = function(request, response) {
     }
 
     return response.json({statuses: status_JSON_objects});
+  });
+};
+
+var get_activities = function(request, response) {
+
+  var filter = {};
+
+  for(var parameter in request.query) {
+
+    if(parameter === "_") {
+      continue;
+    }
+
+    var filter_value = request.query[parameter];
+
+    if(filter_value === "null") {
+      filter_value = null;
+    }
+
+    filter[parameter] = filter_value;
+  }
+
+  Activity.get_activities(filter)
+  .then(function(activities) {
+
+    var activity_JSON_objects = [];
+
+    for(var activity_index = 0; activity_index < activities.length;
+      activity_index++) {
+
+      var activity_JSON_object = activities[activity_index].to_JSON();
+
+      activity_JSON_objects.push(activity_JSON_object);
+    }
+
+    return response.json({activities: activity_JSON_objects});
   });
 };
 
@@ -307,6 +445,20 @@ var delete_note = function(request, response) {
   });
 };
 
+var update_activity = function(request, response) {
+
+  var activity_id = request.params._id;
+  var updated_activity = request.body;
+
+  Activity.get_activity_by_id(activity_id)
+  .then(function(activity) {
+    activity.from_JSON(updated_activity);
+    return activity.save();
+  }).then(function(activity) {
+    return response.json(activity);
+  });
+};
+
 var get_session = function(request, response) {
 
   return response.json({
@@ -336,5 +488,9 @@ router.post("/notes", is_authenticated, post_note);
 router.put("/notes/:_id", is_authenticated, update_note);
 router.delete("/notes/:_id", is_authenticated, delete_note);
 router.get("/session", get_session);
+router.get("/activities", is_authenticated, get_activities);
+router.post("/activities", is_authenticated, post_activity);
+router.put("/activities/:_id", is_authenticated, update_activity);
+router.get("/logs", is_authenticated, get_logs);
 
 module.exports = router;

@@ -17,6 +17,9 @@ function Main_Frame(parent_div, datastore) {
   this.notes_tab = new Notes_Tab(this.nav_bar, this.tab_content,
     this.datastore);
 
+  this.history_tab = new History_Tab(this.nav_bar, this.tab_content,
+    this.datastore);
+
   this.logout_tab = document.createElement("li");
   this.logout_tab.className = "nav-item";
   this.logout_tab_link = document.createElement("a");
