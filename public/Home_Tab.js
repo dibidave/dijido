@@ -467,12 +467,12 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
 
   this.tab_content.appendChild(this.grid_header_row);
 
-  this.goals_table_div = document.createElement("div");
-  this.goals_table_div.className = "row";
-  this.goals_table_div.id = "goals_table";
-  this.goals_table_div.style["overflow-y"] = "auto";
-  this.goals_table_div.style["overflow-x"] = "hidden";
-  this.tab_content.appendChild(this.goals_table_div);
+  this.goals_table_row = document.createElement("div");
+  this.goals_table_row.className = "row";
+  this.goals_table_row.id = "goals_table";
+  this.goals_table_row.style["overflow-y"] = "auto";
+  this.goals_table_row.style["overflow-x"] = "hidden";
+  this.tab_content.appendChild(this.goals_table_row);
 
   this.tab_content_div.appendChild(this.tab_content);
 
@@ -596,7 +596,6 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
 Home_Tab.prototype.resize_goals_table = function() {
   let new_height = $("#main_frame").outerHeight() - $("#home_header").outerHeight() - $("#navbar").outerHeight();
   $("#goals_table").height(new_height);
-  console.log("New height is ", new_height);
 };
 
 Home_Tab.prototype.update_statuses = function() {
@@ -1151,17 +1150,14 @@ Home_Tab.prototype.update_goal_button = function(goal) {
 
 Home_Tab.prototype.update_goals_table = function() {
 
-  while(this.goals_table_div.firstChild) {
-    this.goals_table_div.removeChild(
-      this.goals_table_div.firstChild);
+  while(this.goals_table_row.firstChild) {
+    this.goals_table_row.removeChild(
+      this.goals_table_row.firstChild);
   }
 
   if(this.goals.length === 0) {
     return;
   }
-
-  this.goals_table_row = document.createElement("div");
-  this.goals_table_row.className = "row justify-content-center";
 
   this.status_divs_by_id = {};
 
@@ -1285,7 +1281,6 @@ Home_Tab.prototype.update_goals_table = function() {
     status_div.appendChild(goal_button);
   }
 
-  this.goals_table_div.appendChild(this.goals_table_row);
 };
 
 Home_Tab.prototype.goal_clicked = function(goal_id) {
