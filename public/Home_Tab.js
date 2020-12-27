@@ -995,6 +995,11 @@ Home_Tab.prototype.cancel_delete_clicked = function() {
 
     let current_goal = this.goal_id_map[this.current_goal_id];
 
+    if(current_goal._id in this.parent_goal_id_set) {
+      alert("Can't delete a goal that has children! Change subgoals parent, or abandon this instead");
+      return;
+    }
+
     this.datastore.delete_goal(current_goal._id)
     .then(function() {
       this.new_goal_clicked();
