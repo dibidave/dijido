@@ -9,10 +9,11 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
 
   this.tab_content = document.createElement("div");
   this.tab_content.setAttribute("id", "home");
-  this.tab_content.className = "tab-pane fade active show";
+  this.tab_content.className = "tab-pane fade active show container-fluid";
 
   this.grid_header_row = document.createElement("div");
   this.grid_header_row.className = "row";
+  this.grid_header_row.id = "home_header";
 
   this.current_goal_div = document.createElement("div");
   this.current_goal_div.className = "col-sm-6  border";
@@ -467,7 +468,10 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
   this.tab_content.appendChild(this.grid_header_row);
 
   this.goals_table_div = document.createElement("div");
-  this.goals_table_div.className = "col-sm-12 pt-2";
+  this.goals_table_div.className = "row";
+  this.goals_table_div.id = "goals_table";
+  this.goals_table_div.style["overflow-y"] = "auto";
+  this.goals_table_div.style["overflow-x"] = "hidden";
   this.tab_content.appendChild(this.goals_table_div);
 
   this.tab_content_div.appendChild(this.tab_content);
@@ -580,8 +584,19 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
       );
       $("#parent_goal_filter_select").on("change",
         this.parent_filters_changed.bind(this));
+      this.resize_goals_table();
+      $(window).resize(function() {
+        this.resize_goals_table();
+      }.bind(this));
+
     }.bind(this));
   }.bind(this));
+};
+
+Home_Tab.prototype.resize_goals_table = function() {
+  let new_height = $("#main_frame").outerHeight() - $("#home_header").outerHeight() - $("#navbar").outerHeight();
+  $("#goals_table").height(new_height);
+  console.log("New height is ", new_height);
 };
 
 Home_Tab.prototype.update_statuses = function() {

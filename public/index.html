@@ -15,12 +15,6 @@
       type="text/css" rel="stylesheet" />
     <link href="/external/select2/css/select2.min.css" rel="stylesheet" />
 
-    <style>
-      body {
-        padding-top: 10px;
-      }
-    </style>
-
     <meta name="theme-color" content="#ffffff">
 
     <script src="/external/jquery/jquery.min.js" ></script>
@@ -56,10 +50,11 @@
       function on_load() {
         connector = new Connector({base_URL:base_URL});
         datastore = new Datastore(connector);
-
+        
         var container = document.createElement("div");
         container.id = "main_frame";
         container.className = "container-fluid";
+        container.style.height = "100vh";
         document.body.appendChild(container);
 
         var session = '<%= Session %>';

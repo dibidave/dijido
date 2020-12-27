@@ -5,10 +5,11 @@ function Main_Frame(parent_div, datastore) {
 
   this.nav_bar = document.createElement("ul");
   this.nav_bar.className = "nav nav-tabs";
+  this.nav_bar.id = "navbar";
 
   this.tab_content = document.createElement("div");
   this.tab_content.setAttribute("id", "tab_content");
-  this.tab_content.className = "tab-content";
+  this.tab_content.className = "tab-content row";
 
   this.home_tab = new Home_Tab(this.nav_bar, this.tab_content,
     this.datastore);
