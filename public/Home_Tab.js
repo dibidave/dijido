@@ -568,8 +568,12 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
           width: "75%"
         }
       );
+      $("#parent_goals_select").on("change",
+        this.resize_goals_table.bind(this));
       $("#active_statuses_select")
         .on("change", this.update_goals_table.bind(this));
+      $("#active_statuses_select").on("change",
+        this.resize_goals_table.bind(this));
       $("#parent_goal_filter_select").select2(
         {
           width: "50%"
@@ -584,6 +588,8 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
       );
       $("#parent_goal_filter_select").on("change",
         this.parent_filters_changed.bind(this));
+      $("#parent_goal_filter_select").on("change",
+        this.resize_goals_table.bind(this));
       this.resize_goals_table();
       $(window).resize(function() {
         this.resize_goals_table();
@@ -595,7 +601,7 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
 
 Home_Tab.prototype.resize_goals_table = function() {
   let new_height = $("#main_frame").outerHeight() - $("#home_header").outerHeight() - $("#navbar").outerHeight();
-  $("#goals_table").height(new_height);
+  $("#goals_table").height(new_height - 1);
 };
 
 Home_Tab.prototype.update_statuses = function() {
@@ -1378,6 +1384,7 @@ Home_Tab.prototype.goal_clicked = function(goal_id) {
   goal_button.className = "btn btn-outline-primary btn-lg btn-block active " +
     "no-gutters";
   goal_button.setAttribute("aria-pressed", true);
+  this.resize_goals_table();
 };
 
 Home_Tab.prototype.new_goal_clicked = function() {
