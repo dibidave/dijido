@@ -119,6 +119,19 @@ Connector.prototype.get_goal = function(goal_id) {
 
 };
 
+Connector.prototype.get_unfinished_activity_by_goal_id = function(goal_id) {
+
+  var URL = this.base_URL + "/activities/?goal_id=" + goal_id + "&end_time=null";
+  
+  var promise = get_URL(URL)
+    .then(function(response) {
+      return response.activities;
+    });
+
+  return promise;
+
+};
+
 Connector.prototype.post_goal = function(goal) {
   var URL = this.base_URL + "/goals";
 
@@ -141,11 +154,34 @@ Connector.prototype.get_statuses = function() {
   return promise;
 };
 
+Connector.prototype.get_logs = function(age) {
+  var URL = this.base_URL + "logs/?age=" + age;
+
+  var promise = get_URL(URL)
+  .then(function(response) {
+    return response.logs;
+  });
+
+  return promise;
+}
+
 Connector.prototype.put_goal = function(goal_id, goal) {
 
   var URL = this.base_URL + "/goals/" + goal_id;
 
   var promise = put_URL(URL, goal)
+  .then(function(response) {
+    return response;
+  });
+
+  return promise;
+};
+
+Connector.prototype.put_activity = function(activity_id, activity) {
+
+  var URL = this.base_URL + "/activities/" + activity_id;
+
+  var promise = put_URL(URL, activity)
   .then(function(response) {
     return response;
   });
@@ -234,6 +270,17 @@ Connector.prototype.post_note = function(note) {
   var promise = post_URL(URL, note)
     .then(function(response) {
       return response.note;
+    });
+
+  return promise;
+};
+
+Connector.prototype.post_activity = function(activity) {
+  var URL = this.base_URL + "/activities";
+
+  var promise = post_URL(URL, activity)
+    .then(function(response) {
+      return response.activity;
     });
 
   return promise;

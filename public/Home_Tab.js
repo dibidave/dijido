@@ -239,9 +239,17 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
   this.set_active_button.className = "btn btn-primary";
   this.set_active_button.innerHTML = "Set Active";
   this.set_active_button.addEventListener(
-    "click", this.set_active_clicked.bind(this));
+    "click", this.set_active_clicked.bind(this, false));
 
   this.current_goal_buttons_row.appendChild(this.set_active_button);
+  
+  this.set_active_exclusive_button = document.createElement("button");
+  this.set_active_exclusive_button.className = "btn btn-primary";
+  this.set_active_exclusive_button.innerHTML = "Set Active Exclusive";
+  this.set_active_exclusive_button.addEventListener(
+    "click", this.set_active_clicked.bind(this, true));
+
+  this.current_goal_buttons_row.appendChild(this.set_active_exclusive_button);
 
   this.notes_button = document.createElement("button");
   this.notes_button.className = "btn btn-primary";
@@ -568,8 +576,12 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
           width: "75%"
         }
       );
+      $("#parent_goals_select").on("change",
+        this.resize_goals_table.bind(this));
       $("#active_statuses_select")
         .on("change", this.update_goals_table.bind(this));
+      $("#active_statuses_select").on("change",
+        this.resize_goals_table.bind(this));
       $("#parent_goal_filter_select").select2(
         {
           width: "50%"
@@ -584,6 +596,8 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
       );
       $("#parent_goal_filter_select").on("change",
         this.parent_filters_changed.bind(this));
+      $("#parent_goal_filter_select").on("change",
+        this.resize_goals_table.bind(this));
       this.resize_goals_table();
       $(window).resize(function() {
         this.resize_goals_table();
@@ -595,7 +609,7 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
 
 Home_Tab.prototype.resize_goals_table = function() {
   let new_height = $("#main_frame").outerHeight() - $("#home_header").outerHeight() - $("#navbar").outerHeight();
-  $("#goals_table").height(new_height);
+  $("#goals_table").height(new_height - 1);
 };
 
 Home_Tab.prototype.update_statuses = function() {
@@ -733,6 +747,7 @@ Home_Tab.prototype.update_goals = function() {
 
       if(goal.is_active) {
         this.active_goal_ids.push(goal._id);
+        console.log(goal.name, " is active");
       }
 
       if(goal.completed_on !== null || goal.abandoned_on !== null) {
@@ -999,7 +1014,17 @@ Home_Tab.prototype.cancel_delete_clicked = function() {
       return;
     }
 
-    this.datastore.delete_goal(current_goal._id)
+    var promise = Promise.resolve();
+
+    if(current_goal.is_active) {
+      promise = promise.then(function() {
+        return this.set_active_clicked();
+      }.bind(this));
+    }
+
+    promise = promise.then(function() {
+      return this.datastore.delete_goal(current_goal._id)
+    }.bind(this))
     .then(function() {
       this.new_goal_clicked();
       return this.update_goals();
@@ -1008,9 +1033,11 @@ Home_Tab.prototype.cancel_delete_clicked = function() {
 
 };
 
-Home_Tab.prototype.set_active_clicked = function() {
+Home_Tab.prototype.set_active_clicked = function(is_exclusive) {
 
   var promise = Promise.resolve();
+
+  var transition_time = new Date();
 
   // If the current goal id is null, save it and make it active
   if(this.current_goal_id === null) {
@@ -1029,31 +1056,72 @@ Home_Tab.prototype.set_active_clicked = function() {
 
       current_goal.is_active = false;
       this.set_active_button.innerHTML = "Set Active";
-      return this.datastore.update_goal(current_goal._id, current_goal)
+      this.set_active_exclusive_button.innerHTML = "Set Active Exclusive";
+
+      return this.datastore.get_unfinished_activity_by_goal_id(current_goal._id)
+      .then(function(activities) {
+
+        if(activities.length === 0) {
+           alert("Something went wrong saving activity end, check logs.");
+           return;
+        }
+        else {
+          let activity = activities[0];
+          activity.end_time = transition_time;
+          return this.datastore.update_activity(activity._id, activity);
+        }
+      }.bind(this))
+      .then(function(current_goal) {
+        return this.datastore.update_goal(current_goal._id, current_goal);
+      }.bind(this, current_goal))
       .then(function(goal) {
         return this.update_goal_button(goal);
       }.bind(this));
     }
 
     this.set_active_button.innerHTML = "Set Inactive";
+    this.set_active_exclusive_button.innerHTML = "Set Inactive Exclusive";
 
     var update_promises = [];
 
-    for(var goal_index = 0; goal_index < this.active_goal_ids.length;
-      goal_index++) {
+    if(is_exclusive) {
 
-      let active_goal = this.goal_id_map[this.active_goal_ids[goal_index]];
+      for(var goal_index = 0; goal_index < this.active_goal_ids.length;
+        goal_index++) {
 
-      active_goal.is_active = false;
+        let active_goal = this.goal_id_map[this.active_goal_ids[goal_index]];
 
-      update_promises.push(this.datastore.update_goal(active_goal._id,
-        active_goal)
-      .then(function(goal) {
-        return this.update_goal_button(goal);
-      }.bind(this)));
+        active_goal.is_active = false;
+
+        update_promises.push(this.datastore.get_unfinished_activity_by_goal_id(active_goal._id)
+        .then(function(activities) {
+          if(activities.length === 0) {
+             alert("Something went wrong saving activity end, check logs.");
+             return;
+          }
+          else {
+            let activity = activities[0];
+            activity.end_time = transition_time;
+            return this.datastore.update_activity(activity._id, activity);
+          }
+        }.bind(this)));
+
+        update_promises.push(this.datastore.update_goal(active_goal._id,
+          active_goal)
+        .then(function(goal) {
+          return this.update_goal_button(goal);
+        }.bind(this)));
+      }
     }
 
     current_goal.is_active = true;
+    
+    let activity = {};
+    activity.goal_id = current_goal._id;
+    activity.start_time = transition_time;
+    activity.end_time = null;
+    
+    update_promises.push(this.datastore.add_activity(activity));
 
     update_promises.push(this.datastore.update_goal(current_goal._id,
       current_goal)
@@ -1343,9 +1411,11 @@ Home_Tab.prototype.goal_clicked = function(goal_id) {
 
   if(current_goal.is_active) {
     this.set_active_button.innerHTML = "Set Inactive";
+    this.set_active_exclusive_button.innerHTML = "Set Inactive Exclusive";
   }
   else {
     this.set_active_button.innerHTML = "Set Active";
+    this.set_active_exclusive_button.innerHTML = "Set Active Exclusive";
   }
 
   if(current_goal.recurrence_rate === null) {
@@ -1378,6 +1448,7 @@ Home_Tab.prototype.goal_clicked = function(goal_id) {
   goal_button.className = "btn btn-outline-primary btn-lg btn-block active " +
     "no-gutters";
   goal_button.setAttribute("aria-pressed", true);
+  this.resize_goals_table();
 };
 
 Home_Tab.prototype.new_goal_clicked = function() {
@@ -1405,6 +1476,7 @@ Home_Tab.prototype.new_goal_clicked = function() {
 
   this.cancel_delete_button.innerHTML = "Cancel";
   this.set_active_button.innerHTML = "Set Active";
+  this.set_active_exclusive_button.innerHTML = "Set Active Exclusive";
 
   $("#parent_goals_select").val(null).trigger("change");
   this.recurrence_rate_field.value = null;
@@ -1603,9 +1675,20 @@ Home_Tab.prototype.complete_clicked = function() {
     return;
   }
 
-  this.completed_date_picker.setDate(new Date());
+  let current_goal = this.goal_id_map[this.current_goal_id];
 
-  return this.save_clicked()
+  var promise = Promise.resolve();
+
+  if(current_goal.is_active) {
+    promise = promise.then(function() {
+      return this.set_active_clicked();
+    }.bind(this));
+  }
+
+  return promise.then(function() {
+    this.completed_date_picker.setDate(new Date());
+    return this.save_clicked();
+  }.bind(this))
   .then(function() {
     return this.new_goal_clicked();
   }.bind(this));
@@ -1616,10 +1699,21 @@ Home_Tab.prototype.abandon_clicked = function() {
   if(this.current_goal_id === null) {
     return;
   }
+  
+  let current_goal = this.goal_id_map[this.current_goal_id]; 
 
-  this.abandoned_date_picker.setDate(new Date());
+  var promise = Promise.resolve();
 
-  return this.save_clicked()
+  if(current_goal.is_active) {
+    promise = promise.then(function() {
+      return this.set_active_clicked();
+    }.bind(this));
+  }
+
+  return promise.then(function() {
+    this.abandoned_date_picker.setDate(new Date());
+    return this.save_clicked();
+  }.bind(this))
   .then(function() {
     return this.new_goal_clicked();
   }.bind(this));

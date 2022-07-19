@@ -8,6 +8,8 @@ var Datastore = function(connector) {
   this.notes = [];
   this.note_id_map = {};
   this.config = {};
+  this.logs = [];
+  this.log_age = -1;
 };
 
 Datastore.prototype.sync = function() {
@@ -98,6 +100,56 @@ Datastore.prototype.get_goals = function() {
   return Promise.resolve(this.goals);
 };
 
+Datastore.prototype.get_logs = function(age) {
+  
+  if(age <= this.log_age) {
+    return Promise.resolve(this.logs);
+  }
+  else {
+    this.log_age = age;
+    return this.load_logs()
+    .then(function() {
+      return this.logs;
+    }.bind(this));
+  }
+};
+
+Datastore.prototype.load_logs = function() {
+
+  let age = this.log_age;
+
+  var promise = this.connector.get_logs(age)
+  .then(function(logs) {
+
+    var log_promises = [];
+    
+    for(var log_index = 0; log_index < logs.length; log_index++) {
+      
+      let log = logs[log_index];
+      if(log.type === "Started" || log.type === "Stopped") {
+        var promise = this.get_goal_by_id(log.text)
+        .then(function(log, goal) {
+          log.text = goal.name;
+          return log;
+        }.bind(this, log));
+        log_promises.push(promise);
+      }
+      else {
+        log_promises.push(Promise.resolve(log));
+      }
+    }
+    
+    return Promise.all(log_promises);
+  }.bind(this))
+  .then(function(logs) {
+    this.logs = logs;
+
+    return this.sort_logs();
+  }.bind(this));
+
+  return promise;
+};
+
 Datastore.prototype.get_notes = function() {
   return Promise.resolve(this.notes);
 };
@@ -105,7 +157,7 @@ Datastore.prototype.get_notes = function() {
 Datastore.prototype.get_goal_by_id = function(goal_id) {
 
   if(goal_id in this.goal_id_map) {
-    return this.goal_id_map[goal_id];
+    return Promise.resolve(this.goal_id_map[goal_id]);
   }
   else {
     return this.connector.get_goal(goal_id)
@@ -116,6 +168,16 @@ Datastore.prototype.get_goal_by_id = function(goal_id) {
       return goal;
     }.bind(this));
   }
+};
+
+Datastore.prototype.get_unfinished_activity_by_goal_id = function(goal_id) {
+
+  return this.connector.get_unfinished_activity_by_goal_id(goal_id);
+}
+
+Datastore.prototype.update_activity = function(activity_id, activity) {
+
+  return this.connector.put_activity(activity_id, activity);
 };
 
 Datastore.prototype.get_note_by_id = function(note_id) {
@@ -167,6 +229,9 @@ Datastore.prototype.delete_note = function(note_id) {
 };
 
 Datastore.prototype.update_goal = function(goal_id, goal) {
+
+  console.log("Updating ");
+  console.log(goal);
   
   return this.connector.put_goal(goal_id, goal)
   .then(function(goal) {
@@ -227,6 +292,16 @@ Datastore.prototype.add_note = function(note) {
   }.bind(this));
 
 };
+
+Datastore.prototype.add_activity = function(activity) {
+
+  return this.connector.post_activity(activity)
+};
+
+Datastore.prototype.sort_logs = function() {
+  this.logs.sort((a, b) => (a.date < b.date) ? 1 : -1);
+};
+
 
 Datastore.prototype.sort_goals = function() {
 
