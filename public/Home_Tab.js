@@ -1216,6 +1216,10 @@ Home_Tab.prototype.update_goal_button = function(goal) {
   goal_button.appendChild(goal_container);
 };
 
+/*
+Render the goals in the kanban board based on the current
+goals data in memory.
+*/
 Home_Tab.prototype.update_goals_table = function() {
 
   while(this.goals_table_row.firstChild) {
@@ -1287,66 +1291,75 @@ Home_Tab.prototype.update_goals_table = function() {
 
   this.goal_buttons_by_id = {};
 
-  // Add goals to respective columns
-  for(var goal_index = 0; goal_index < this.goals.length;
-    goal_index++) {
+  // Load all the active goals first
+  for(let do_active_goals of [true, false]) {
 
-    let goal = this.goals[goal_index];
+    // Add goals to respective columns
+    for(var goal_index = 0; goal_index < this.goals.length;
+      goal_index++) {
 
-    // If this goal should not be displayed, ignore it
-    if(!this.is_goal_in_filter(goal)) {
-      continue;
-    }
+      let goal = this.goals[goal_index];
 
-    let status_div = null;
+      if (goal.is_active !== do_active_goals) {
+        continue;
+      }
 
-    // If this goal has an explicit status, we use it
-    if(goal.status_id in this.status_divs_by_id) {
-      status_div = this.status_divs_by_id[goal.status_id];
-    }
-    else if(goal.target_date === null) {
-      continue;
-    }
+      // If this goal should not be displayed, ignore it
+      if(!this.is_goal_in_filter(goal)) {
+        continue;
+      }
 
-    // Otherwise we deduce the goal's status by its target date
-    else {
+      let status_div = null;
 
-      let goal_target_date = new Date(goal.target_date);
+      // If this goal has an explicit status, we use it
+      if(goal.status_id in this.status_divs_by_id) {
+        status_div = this.status_divs_by_id[goal.status_id];
+      }
+      else if(goal.target_date === null) {
+        continue;
+      }
 
-      for(status_index = 0; status_index < selected_statuses.length;
-        status_index++) {
+      // Otherwise we deduce the goal's status by its target date
+      else {
 
-        let status = selected_statuses[status_index];
+        let goal_target_date = new Date(goal.target_date);
 
-        let status_range = Util.get_date_range_for_status(status);
+        for(status_index = 0; status_index < selected_statuses.length;
+          status_index++) {
 
-        if(status_range.end === null) {
-          continue;
-        }
+          let status = selected_statuses[status_index];
 
-        if(goal_target_date <= status_range.end) {
-          status_div = this.status_divs_by_id[status._id];
-          break;
+          let status_range = Util.get_date_range_for_status(status);
+
+          if(status_range.end === null) {
+            continue;
+          }
+
+          if(goal_target_date <= status_range.end) {
+            status_div = this.status_divs_by_id[status._id];
+            break;
+          }
         }
       }
+
+      if(status_div === null) {
+        continue;
+      }
+
+      if(this.next_goal_id === goal._id) {
+        let bar_thing = document.createElement("hr");
+        status_div.appendChild(bar_thing);
+      }
+
+      let goal_button = document.createElement("div");
+
+      this.goal_buttons_by_id[goal._id] = goal_button;
+
+      this.update_goal_button(goal);
+
+      status_div.appendChild(goal_button);
     }
 
-    if(status_div === null) {
-      continue;
-    }
-
-    if(this.next_goal_id === goal._id) {
-      let bar_thing = document.createElement("hr");
-      status_div.appendChild(bar_thing);
-    }
-
-    let goal_button = document.createElement("div");
-
-    this.goal_buttons_by_id[goal._id] = goal_button;
-
-    this.update_goal_button(goal);
-
-    status_div.appendChild(goal_button);
   }
 
 };

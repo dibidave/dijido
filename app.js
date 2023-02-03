@@ -9,6 +9,7 @@ var Passport_Strategy = require("passport-local").Strategy;
 var User = require("sqit/authentication/User");
 var express_session = require("express-session");
 var logger = require("sqit/logging/Logger").get_logger("app");
+var globalPackageVersion = require('global-package-version');
 
 var app = express();
 

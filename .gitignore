@@ -1,3 +1,4 @@
 log/
 config/config.json
 node_modules/
+config/*.pem

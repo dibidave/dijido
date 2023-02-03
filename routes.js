@@ -115,12 +115,20 @@ var get_logs = function(request, response) {
 
   let completed_filter = {};
   completed_filter.completed_on = {
-    "$gt": earliest_date.toDate()
+    "$gt": earliest_date.toDate(),
+  };
+
+  completed_filter._deleted_on = {
+    "$eq": null
   };
 
   let abandoned_filter = {};
   abandoned_filter.abandoned_on = {
     "$gt": earliest_date.toDate()
+  };
+
+  abandoned_filter._deleted_on = {
+    "$eq": null
   };
 
   let activity_start_filter = {};

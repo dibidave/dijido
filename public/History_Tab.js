@@ -26,7 +26,7 @@ History_Tab.prototype.update_history = function() {
 
   return this.datastore.load_logs()
   .then(function() {
-    return this.datastore.get_logs(90)
+    return this.datastore.get_logs(10)
   }.bind(this)
   ).then(function(logs) {
 
