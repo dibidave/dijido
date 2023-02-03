@@ -550,6 +550,10 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
 
   this.filter_goal_ids = [];
 
+  $(document).on('select2:open', () => {
+    document.querySelector('.select2-container--open .select2-search__field').focus();
+  });
+
   this.update_statuses()
   .then(this.update_recurrence_dropdown.bind(this))
   .then(this.update_goals.bind(this))
