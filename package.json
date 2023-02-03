@@ -29,7 +29,7 @@
     "popper.js": "^1.15.0",
     "select2": "^4.0.6",
     "sendmail": "^1.4.1",
-    "shelljs": "^0.8.1",
+    "shelljs": "^0.8.5",
     "sqit": "git+ssh://git@github.com/dibidave/node-sqit.git"
   },
   "devDependencies": {},
