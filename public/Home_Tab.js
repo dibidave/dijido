@@ -722,11 +722,21 @@ Home_Tab.prototype.update_goals = function() {
     let time_now = new Date();
     this.child_goal_id_lookup = {};
 
+    let bathroom_index = -1;
+    let foundation_index = -1;
+
     for(var goal_index = 0; goal_index < this.goals.length;
       goal_index++) {
 
       let goal = this.goals[goal_index];
-      
+
+      if(goal.name == "Bathroom") {
+        bathroom_index = goal_index;
+      }
+      else if(goal.name == "Watch Foundation Season 1") {
+        foundation_index = goal_index
+      }
+
       if(this.next_goal_id === null && goal.completed_on === null && goal.abandoned_on === null && goal.target_date !== null && time_now < new Date(goal.target_date)) {
         this.next_goal_id = goal._id;
       }
@@ -763,6 +773,13 @@ Home_Tab.prototype.update_goals = function() {
 
       option = new Option(goal.name, goal._id, false, false);
       $("#parent_goal_filter_select").append(option)
+    }
+
+    if(bathroom_index < foundation_index) {
+      console.log("Bathroom before Foundation");
+    }
+    else {
+      console.log("Foundation before Bathroom");
     }
 
     if(this.current_goal_id !== null) {
@@ -1086,18 +1103,20 @@ Home_Tab.prototype.set_active_clicked = function(is_exclusive) {
     this.set_active_button.innerHTML = "Set Inactive";
     this.set_active_exclusive_button.innerHTML = "Set Inactive Exclusive";
 
-    var update_promises = [];
+    var inner_promise = Promise.resolve();
 
     if(is_exclusive) {
 
       for(var goal_index = 0; goal_index < this.active_goal_ids.length;
         goal_index++) {
 
-        let active_goal = this.goal_id_map[this.active_goal_ids[goal_index]];
+        var active_goal = this.goal_id_map[this.active_goal_ids[goal_index]];
 
         active_goal.is_active = false;
 
-        update_promises.push(this.datastore.get_unfinished_activity_by_goal_id(active_goal._id)
+        inner_promise = inner_promise.then(function() {
+          return this.datastore.get_unfinished_activity_by_goal_id(active_goal._id);
+        }.bind(this))
         .then(function(activities) {
           if(activities.length === 0) {
              alert("Something went wrong saving activity end, check logs.");
@@ -1108,35 +1127,42 @@ Home_Tab.prototype.set_active_clicked = function(is_exclusive) {
             activity.end_time = transition_time;
             return this.datastore.update_activity(activity._id, activity);
           }
-        }.bind(this)));
-
-        update_promises.push(this.datastore.update_goal(active_goal._id,
-          active_goal)
+        }.bind(this))
+        .then(function() {
+          return this.datastore.update_goal(active_goal._id, active_goal)
+        }.bind(this))
         .then(function(goal) {
           return this.update_goal_button(goal);
-        }.bind(this)));
+        }.bind(this));
       }
     }
 
     current_goal.is_active = true;
     
-    let activity = {};
+    var activity = {};
     activity.goal_id = current_goal._id;
     activity.start_time = transition_time;
     activity.end_time = null;
-    
-    update_promises.push(this.datastore.add_activity(activity));
 
-    update_promises.push(this.datastore.update_goal(current_goal._id,
-      current_goal)
+    inner_promise = inner_promise.then(function() {
+      return this.datastore.add_activity(activity);
+    }.bind(this))
+    .then(function() {
+      return this.datastore.add_activity(activity);
+    }.bind(this))
+    .then(function() {
+      return this.datastore.update_goal(current_goal._id, current_goal)
+    }.bind(this))
     .then(function(goal) {
       return this.update_goal_button(goal);
-    }.bind(this)));
+    }.bind(this));
 
-    return Promise.all(update_promises);
+    return inner_promise;
 
   }.bind(this))
-  .then(this.update_goals.bind(this));
+  .then(function() {
+    return this.update_goals();
+  }.bind(this));
 
   return promise;
 
@@ -1295,6 +1321,7 @@ Home_Tab.prototype.update_goals_table = function() {
 
   this.goal_buttons_by_id = {};
 
+  console.log("Placing goals");
   // Load all the active goals first
   for(let do_active_goals of [true, false]) {
 
@@ -1365,6 +1392,8 @@ Home_Tab.prototype.update_goals_table = function() {
     }
 
   }
+
+  console.log("Goals placed");
 
 };
 

@@ -35,7 +35,12 @@ Datastore.prototype.sync = function() {
     this.goals = new_goals;
     this.goal_id_map = new_goal_id_map;
 
-    return this.get_parent_goals();
+    return this.get_parent_goals()
+    .then(function() {
+      console.log("Sorting");
+      this.sort_goals();
+      console.log("Sorted");
+    }.bind(this));
 
   }.bind(this)
   ).then(this.connector.get_statuses)
@@ -244,7 +249,9 @@ Datastore.prototype.update_goal = function(goal_id, goal) {
     }
 
     this.goal_id_map[goal._id] = goal;
+    console.log("Sorting");
     this.sort_goals();
+    console.log("Sorted");
 
     return goal;
   }.bind(this));
