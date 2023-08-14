@@ -44,6 +44,23 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
 
   this.current_goal_div.appendChild(this.current_goal_id_row);
 
+  this.goal_search_row = document.createElement("div");
+  this.goal_search_row.className = "pb-1 row";
+
+  this.goal_search_label = document.createElement("label");
+  this.goal_search_label.className = "label label-default col-sm-3";
+  this.goal_search_label.innerHTML = "Search Goals";
+  this.goal_search_row.appendChild(this.goal_search_label);
+
+  this.goal_search_dropdown = document.createElement("select")
+  this.goal_search_dropdown.className = "js-example-basic";
+  this.goal_search_dropdown.id = "goal_search_select";
+
+  this.goal_search_row.appendChild(this.goal_search_dropdown);
+  this.current_goal_div.appendChild(this.goal_search_row);
+
+  // The goal search field
+
   // The current goal name field
   this.current_goal_name_row = document.createElement("div");
   this.current_goal_name_row.className = "pb-1 row";
@@ -605,9 +622,18 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
         }
       );
       $("#parent_goal_filter_select").on("change",
-        this.parent_filters_changed.bind(this));
+        this.parent_filters_changed.bind(this)
+      );
       $("#parent_goal_filter_select").on("change",
-        this.resize_goals_table.bind(this));
+        this.resize_goals_table.bind(this)
+      );
+      $("#goal_search_select").on("change", function() {
+
+        const goal_id = $("#goal_search_select").val();
+        console.log(goal_id);
+        console.log("searched");
+        this.goal_clicked(goal_id);
+      }.bind(this));
       this.resize_goals_table();
       $(window).resize(function() {
         this.resize_goals_table();
@@ -718,6 +744,7 @@ Home_Tab.prototype.update_goals = function() {
 
     $("#parent_goals_select").empty()
     $("#parent_goal_filter_select").empty()
+    $("#goal_search_select").empty()
 
     this.goals = goals;
     this.goal_id_map = {};
@@ -767,7 +794,8 @@ Home_Tab.prototype.update_goals = function() {
       $("#parent_goals_select").append(option)
 
       option = new Option(goal.name, goal._id, false, false);
-      $("#parent_goal_filter_select").append(option)
+      $("#parent_goal_filter_select").append(option);
+      $("#goal_search_select").append(option);
     }
 
     if(this.current_goal_id !== null) {
@@ -1361,6 +1389,8 @@ Home_Tab.prototype.render_goals_table = function() {
 };
 
 Home_Tab.prototype.goal_clicked = function(goal_id) {
+
+  $("#goal_search_select").val(goal_id);
 
   if(this.current_goal_id !== null) {
 
