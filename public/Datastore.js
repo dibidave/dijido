@@ -164,12 +164,12 @@ Datastore.prototype.get_goal_by_id = function(goal_id) {
   }
   else {
     return this.connector.get_goal(goal_id)
-    .then(function(goal) {
+    .then(function(goal_id, goal) {
       this.goals.push(goal);
       this.goal_id_map[goal._id] = goal;
 
       return goal;
-    }.bind(this));
+    }.bind(this, goal_id));
   }
 };
 

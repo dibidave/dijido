@@ -1642,6 +1642,11 @@ Home_Tab.prototype.is_goal_in_filter = function(goal, ignore_depth) {
     ignore_depth = false;
   }
 
+  // Always show active goals at top of status
+  if(goal.is_active) {
+    return true;
+  }
+
   if(goal.completed_on !== null || goal.abandoned_on !== null) {
     return false;
   }
