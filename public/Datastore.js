@@ -31,11 +31,14 @@ Datastore.prototype.sync = function() {
     for(var goal_id in new_goal_id_map) {
       new_goals.push(new_goal_id_map[goal_id]);
     }
-
+    console.log("Setting all the goals to new ones")
     this.goals = new_goals;
     this.goal_id_map = new_goal_id_map;
 
-    return this.get_parent_goals();
+    return this.get_parent_goals()
+    .then(function() {
+      this.sort_goals();
+    }.bind(this));
 
   }.bind(this)
   ).then(this.connector.get_statuses)
@@ -161,12 +164,12 @@ Datastore.prototype.get_goal_by_id = function(goal_id) {
   }
   else {
     return this.connector.get_goal(goal_id)
-    .then(function(goal) {
+    .then(function(goal_id, goal) {
       this.goals.push(goal);
       this.goal_id_map[goal._id] = goal;
 
       return goal;
-    }.bind(this));
+    }.bind(this, goal_id));
   }
 };
 
@@ -203,6 +206,7 @@ Datastore.prototype.delete_goal = function(goal_id) {
     
     for(var goal_index = 0; goal_index < this.goals.length; goal_index++) {
       if(this.goals[goal_index]._id == goal_id) {
+        console.log("Splicing goal " + this.goals[goal_index]._id);
         this.goals.splice(goal_index, 1);
         break;
       }
@@ -230,14 +234,14 @@ Datastore.prototype.delete_note = function(note_id) {
 
 Datastore.prototype.update_goal = function(goal_id, goal) {
 
-  console.log("Updating ");
-  console.log(goal);
+  console.log("Putting goal " + goal_id);
   
   return this.connector.put_goal(goal_id, goal)
   .then(function(goal) {
     
     for(var goal_index = 0; goal_index < this.goals.length; goal_index++) {
       if(this.goals[goal_index]._id == goal._id) {
+        console.log("Updating local goal " + goal._id);
         this.goals[goal_index] = goal;
         break;
       }
@@ -275,9 +279,11 @@ Datastore.prototype.add_goal = function(goal) {
 
   return this.connector.post_goal(goal)
   .then(function(goal) {
+    console.log("Adding goal " + goal._id);
     this.goals.push(goal);
     this.goal_id_map[goal._id] = goal;
     this.sort_goals();
+    return goal._id;
   }.bind(this));
 
 };
@@ -305,9 +311,13 @@ Datastore.prototype.sort_logs = function() {
 
 Datastore.prototype.sort_goals = function() {
 
-  this.goals.sort((a, b) => (a.target_date > b.target_date) ? 1 :
-    (a.target_date === b.target_date) ? ((a.name > b.name) ? 1 : -1) : -1);
-  
+  this.goals.sort(function(a, b) {
+    if(a.target_date != null && b.target_date != null) {
+      return a.target_date > b.target_date;
+    }
+    return a.name > b.name;
+  });
+
 };
 
 Datastore.prototype.sort_notes = function() {

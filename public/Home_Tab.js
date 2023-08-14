@@ -16,7 +16,7 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
   this.grid_header_row.id = "home_header";
 
   this.current_goal_div = document.createElement("div");
-  this.current_goal_div.className = "col-sm-6  border";
+  this.current_goal_div.className = "col-sm-6 border";
 
   // The current goal id field
   this.current_goal_id_row = document.createElement("div");
@@ -43,6 +43,22 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
   this.current_goal_id_row.appendChild(this.new_subgoal_button);
 
   this.current_goal_div.appendChild(this.current_goal_id_row);
+
+  // The goal search field
+  this.goal_search_row = document.createElement("div");
+  this.goal_search_row.className = "pb-1 row";
+
+  this.goal_search_label = document.createElement("label");
+  this.goal_search_label.className = "label label-default col-sm-3";
+  this.goal_search_label.innerHTML = "Search Goals";
+  this.goal_search_row.appendChild(this.goal_search_label);
+
+  this.goal_search_dropdown = document.createElement("select")
+  this.goal_search_dropdown.className = "js-example-basic col-sm-9";
+  this.goal_search_dropdown.id = "goal_search_select";
+
+  this.goal_search_row.appendChild(this.goal_search_dropdown);
+  this.current_goal_div.appendChild(this.goal_search_row);
 
   // The current goal name field
   this.current_goal_name_row = document.createElement("div");
@@ -239,7 +255,7 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
   this.set_active_button.className = "btn btn-primary";
   this.set_active_button.innerHTML = "Set Active";
   this.set_active_button.addEventListener(
-    "click", this.set_active_clicked.bind(this, false));
+    "click", this.set_active_clicked.bind(this, false, false));
 
   this.current_goal_buttons_row.appendChild(this.set_active_button);
   
@@ -247,9 +263,17 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
   this.set_active_exclusive_button.className = "btn btn-primary";
   this.set_active_exclusive_button.innerHTML = "Set Active Exclusive";
   this.set_active_exclusive_button.addEventListener(
-    "click", this.set_active_clicked.bind(this, true));
+    "click", this.set_active_clicked.bind(this, true, false));
 
   this.current_goal_buttons_row.appendChild(this.set_active_exclusive_button);
+  
+  this.complete_set_active_button = document.createElement("button");
+  this.complete_set_active_button.className = "btn btn-primary";
+  this.complete_set_active_button.innerHTML = "Complete and Set Active";
+  this.complete_set_active_button.addEventListener(
+    "click", this.set_active_clicked.bind(this, true, true));
+
+  this.current_goal_buttons_row.appendChild(this.complete_set_active_button);
 
   this.notes_button = document.createElement("button");
   this.notes_button.className = "btn btn-primary";
@@ -546,9 +570,11 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
 
   this.current_goal_id = null;
 
-  this.update_goals_timer = null;
-
   this.filter_goal_ids = [];
+
+  $(document).on('select2:open', () => {
+    document.querySelector('.select2-container--open .select2-search__field').focus();
+  });
 
   this.update_statuses()
   .then(this.update_recurrence_dropdown.bind(this))
@@ -579,7 +605,7 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
       $("#parent_goals_select").on("change",
         this.resize_goals_table.bind(this));
       $("#active_statuses_select")
-        .on("change", this.update_goals_table.bind(this));
+        .on("change", this.render_goals_table.bind(this));
       $("#active_statuses_select").on("change",
         this.resize_goals_table.bind(this));
       $("#parent_goal_filter_select").select2(
@@ -595,9 +621,15 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
         }
       );
       $("#parent_goal_filter_select").on("change",
-        this.parent_filters_changed.bind(this));
+        this.parent_filters_changed.bind(this)
+      );
       $("#parent_goal_filter_select").on("change",
-        this.resize_goals_table.bind(this));
+        this.resize_goals_table.bind(this)
+      );
+      $("#goal_search_select").on("change", function() {
+        const goal_id = $("#goal_search_select").val();
+        this.goal_selected(goal_id);
+      }.bind(this));
       this.resize_goals_table();
       $(window).resize(function() {
         this.resize_goals_table();
@@ -696,19 +728,19 @@ Home_Tab.prototype.update_statuses = function() {
   return promise;
 };
 
+// Get all goals from the datastore and update our cache
 Home_Tab.prototype.update_goals = function() {
 
-  if(this.update_goals_timer !== null) {
-    clearTimeout(this.update_goals_timer);
-  }
-
+  console.log("Getting goals from datastore");
   return this.datastore.get_goals()
   .then(function(goals) {
+    console.log("Got goals from datastore");
 
     let old_filter_goal_ids = this.filter_goal_ids;
 
     $("#parent_goals_select").empty()
     $("#parent_goal_filter_select").empty()
+    $("#goal_search_select").empty()
 
     this.goals = goals;
     this.goal_id_map = {};
@@ -722,7 +754,7 @@ Home_Tab.prototype.update_goals = function() {
       goal_index++) {
 
       let goal = this.goals[goal_index];
-      
+
       if(this.next_goal_id === null && goal.completed_on === null && goal.abandoned_on === null && goal.target_date !== null && time_now < new Date(goal.target_date)) {
         this.next_goal_id = goal._id;
       }
@@ -747,7 +779,7 @@ Home_Tab.prototype.update_goals = function() {
 
       if(goal.is_active) {
         this.active_goal_ids.push(goal._id);
-        console.log(goal.name, " is active");
+        console.log(goal.name + " is active");
       }
 
       if(goal.completed_on !== null || goal.abandoned_on !== null) {
@@ -758,7 +790,9 @@ Home_Tab.prototype.update_goals = function() {
       $("#parent_goals_select").append(option)
 
       option = new Option(goal.name, goal._id, false, false);
-      $("#parent_goal_filter_select").append(option)
+      $("#parent_goal_filter_select").append(option);
+      option = new Option(goal.name, goal._id, false, false);
+      $("#goal_search_select").append(option);
     }
 
     if(this.current_goal_id !== null) {
@@ -780,13 +814,9 @@ Home_Tab.prototype.update_goals = function() {
       }
     }
 
-    $("#parent_goal_filter_select").val(this.filter_goal_ids).trigger("change");
+    $("#parent_goal_filter_select").val(this.filter_goal_ids);
 
-    this.update_goals_table();
-
-  }.bind(this)
-  ).then(function() {
-    setTimeout(this.update_goals.bind(this), 300000);
+    this.render_goals_table();
   }.bind(this));
 };
 
@@ -971,7 +1001,8 @@ Home_Tab.prototype.save_current = function() {
     new_goal.is_organized = true;
 
     return this.datastore.add_goal(new_goal)
-    .then(function(new_goal) {
+    .then(function(new_goal_id) {
+      this.current_goal_id = new_goal_id;
       return this.update_goals();
     }.bind(this));
   }
@@ -1033,112 +1064,99 @@ Home_Tab.prototype.cancel_delete_clicked = function() {
 
 };
 
-Home_Tab.prototype.set_active_clicked = function(is_exclusive) {
+Home_Tab.prototype.set_active_clicked = async function(is_exclusive, complete_current) {
 
-  var promise = Promise.resolve();
+  console.log("set active clicked async");
 
   var transition_time = new Date();
 
   // If the current goal id is null, save it and make it active
   if(this.current_goal_id === null) {
-    promise = promise.then(this.save_current.bind(this));
+    await this.save_current();
+  }
+  
+  if (this.current_goal_id === null) {
+    return;
   }
 
-  promise = promise.then(function() {
+  let current_goal = this.goal_id_map[this.current_goal_id];
 
-    if (this.current_goal_id === null) {
-      return Promise.resolve();
+  // If the current goal is active, we're going to finish and save the activity
+  if(current_goal.is_active) {
+
+    this.set_active_button.innerHTML = "Set Active";
+    this.set_active_exclusive_button.innerHTML = "Set Active Exclusive";
+
+    let activities = await this.datastore.get_unfinished_activity_by_goal_id(current_goal._id)
+
+    if(activities.length !== 1) {
+        alert("Something went wrong saving activity end, check logs.");
+        return;
     }
 
-    let current_goal = this.goal_id_map[this.current_goal_id];
-
-    if(current_goal.is_active) {
-
-      current_goal.is_active = false;
-      this.set_active_button.innerHTML = "Set Active";
-      this.set_active_exclusive_button.innerHTML = "Set Active Exclusive";
-
-      return this.datastore.get_unfinished_activity_by_goal_id(current_goal._id)
-      .then(function(activities) {
-
-        if(activities.length === 0) {
-           alert("Something went wrong saving activity end, check logs.");
-           return;
-        }
-        else {
-          let activity = activities[0];
-          activity.end_time = transition_time;
-          return this.datastore.update_activity(activity._id, activity);
-        }
-      }.bind(this))
-      .then(function(current_goal) {
-        return this.datastore.update_goal(current_goal._id, current_goal);
-      }.bind(this, current_goal))
-      .then(function(goal) {
-        return this.update_goal_button(goal);
-      }.bind(this));
-    }
+    let activity = activities[0];
+    activity.end_time = transition_time;
+    await this.datastore.update_activity(activity._id, activity);
+  }
+  else {
 
     this.set_active_button.innerHTML = "Set Inactive";
     this.set_active_exclusive_button.innerHTML = "Set Inactive Exclusive";
 
-    var update_promises = [];
-
+    // If this is exclusive, we go through and make inactive all currently
+    // active goals
     if(is_exclusive) {
 
       for(var goal_index = 0; goal_index < this.active_goal_ids.length;
         goal_index++) {
 
-        let active_goal = this.goal_id_map[this.active_goal_ids[goal_index]];
+        var active_goal = this.goal_id_map[this.active_goal_ids[goal_index]];
 
         active_goal.is_active = false;
 
-        update_promises.push(this.datastore.get_unfinished_activity_by_goal_id(active_goal._id)
-        .then(function(activities) {
-          if(activities.length === 0) {
-             alert("Something went wrong saving activity end, check logs.");
-             return;
-          }
-          else {
-            let activity = activities[0];
-            activity.end_time = transition_time;
-            return this.datastore.update_activity(activity._id, activity);
-          }
-        }.bind(this)));
+        let activities = await this.datastore.get_unfinished_activity_by_goal_id(active_goal._id);
 
-        update_promises.push(this.datastore.update_goal(active_goal._id,
-          active_goal)
-        .then(function(goal) {
-          return this.update_goal_button(goal);
-        }.bind(this)));
+        if(activities.length !== 1) {
+          alert("Something went wrong saving activity end, check logs.");
+          return;
+        }
+
+        let activity = activities[0];
+        activity.end_time = transition_time;
+        await this.datastore.update_activity(activity._id, activity);
+
+        if(complete_current === true) {
+          active_goal.completed_on = transition_time;
+        }
+
+        await this.datastore.update_goal(active_goal._id, active_goal);
+        await this.render_goal_button(active_goal);
       }
     }
-
-    current_goal.is_active = true;
-    
-    let activity = {};
+  
+    var activity = {};
     activity.goal_id = current_goal._id;
     activity.start_time = transition_time;
     activity.end_time = null;
-    
-    update_promises.push(this.datastore.add_activity(activity));
+    await this.datastore.add_activity(activity);
+  }
 
-    update_promises.push(this.datastore.update_goal(current_goal._id,
-      current_goal)
-    .then(function(goal) {
-      return this.update_goal_button(goal);
-    }.bind(this)));
-
-    return Promise.all(update_promises);
-
-  }.bind(this))
-  .then(this.update_goals.bind(this));
-
-  return promise;
+  current_goal.is_active = !current_goal.is_active;
+  
+  await this.datastore.update_goal(current_goal._id, current_goal);
+  await this.render_goal_button(current_goal);
+  await this.update_goals();
 
 };
 
-Home_Tab.prototype.update_goal_button = function(goal) {
+// Home_Tab.prototype.set_active_clicked = function(is_exclusive) {
+
+//   return this.set_active_clicked_async(is_exclusive);
+
+// };
+
+// Render the button for a specific goal, wherever it may be
+Home_Tab.prototype.render_goal_button = function(goal) {
 
   if(!this.goal_buttons_by_id.hasOwnProperty(goal._id)) {
     return;
@@ -1216,7 +1234,11 @@ Home_Tab.prototype.update_goal_button = function(goal) {
   goal_button.appendChild(goal_container);
 };
 
-Home_Tab.prototype.update_goals_table = function() {
+/*
+Render the goals in the kanban board based on the current
+goals data in memory.
+*/
+Home_Tab.prototype.render_goals_table = function() {
 
   while(this.goals_table_row.firstChild) {
     this.goals_table_row.removeChild(
@@ -1287,71 +1309,87 @@ Home_Tab.prototype.update_goals_table = function() {
 
   this.goal_buttons_by_id = {};
 
-  // Add goals to respective columns
-  for(var goal_index = 0; goal_index < this.goals.length;
-    goal_index++) {
+  console.log("Placing goals");
+  // Load all the active goals first
+  for(let do_active_goals of [true, false]) {
 
-    let goal = this.goals[goal_index];
+    // Add goals to respective columns
+    for(var goal_index = 0; goal_index < this.goals.length;
+      goal_index++) {
 
-    // If this goal should not be displayed, ignore it
-    if(!this.is_goal_in_filter(goal)) {
-      continue;
-    }
+      let goal = this.goals[goal_index];
 
-    let status_div = null;
+      if (goal.is_active !== do_active_goals) {
+        continue;
+      }
 
-    // If this goal has an explicit status, we use it
-    if(goal.status_id in this.status_divs_by_id) {
-      status_div = this.status_divs_by_id[goal.status_id];
-    }
-    else if(goal.target_date === null) {
-      continue;
-    }
+      // If this goal should not be displayed, ignore it
+      if(!this.is_goal_in_filter(goal)) {
+        continue;
+      }
 
-    // Otherwise we deduce the goal's status by its target date
-    else {
+      let status_div = null;
 
-      let goal_target_date = new Date(goal.target_date);
+      // If this goal has an explicit status, we use it
+      if(goal.status_id in this.status_divs_by_id) {
+        status_div = this.status_divs_by_id[goal.status_id];
+      }
+      else if(goal.target_date === null) {
+        continue;
+      }
 
-      for(status_index = 0; status_index < selected_statuses.length;
-        status_index++) {
+      // Otherwise we deduce the goal's status by its target date
+      else {
 
-        let status = selected_statuses[status_index];
+        let goal_target_date = new Date(goal.target_date);
 
-        let status_range = Util.get_date_range_for_status(status);
+        for(status_index = 0; status_index < selected_statuses.length;
+          status_index++) {
 
-        if(status_range.end === null) {
-          continue;
-        }
+          let status = selected_statuses[status_index];
 
-        if(goal_target_date <= status_range.end) {
-          status_div = this.status_divs_by_id[status._id];
-          break;
+          let status_range = Util.get_date_range_for_status(status);
+
+          if(status_range.end === null) {
+            continue;
+          }
+
+          if(goal_target_date <= status_range.end) {
+            status_div = this.status_divs_by_id[status._id];
+            break;
+          }
         }
       }
+
+      if(status_div === null) {
+        continue;
+      }
+
+      if(this.next_goal_id === goal._id) {
+        let bar_thing = document.createElement("hr");
+        status_div.appendChild(bar_thing);
+      }
+
+      let goal_button = document.createElement("div");
+
+      this.goal_buttons_by_id[goal._id] = goal_button;
+
+      this.render_goal_button(goal);
+      
+      status_div.appendChild(goal_button);
     }
 
-    if(status_div === null) {
-      continue;
-    }
-
-    if(this.next_goal_id === goal._id) {
-      let bar_thing = document.createElement("hr");
-      status_div.appendChild(bar_thing);
-    }
-
-    let goal_button = document.createElement("div");
-
-    this.goal_buttons_by_id[goal._id] = goal_button;
-
-    this.update_goal_button(goal);
-
-    status_div.appendChild(goal_button);
   }
+
+  console.log("Goals placed");
 
 };
 
 Home_Tab.prototype.goal_clicked = function(goal_id) {
+  $("#goal_search_select").val(goal_id).trigger("change");
+}
+
+Home_Tab.prototype.goal_selected = function(goal_id) {
 
   if(this.current_goal_id !== null) {
 
@@ -1444,10 +1482,13 @@ Home_Tab.prototype.goal_clicked = function(goal_id) {
 
   this.recurrence_fixed_checkbox.checked = current_goal.is_recurrence_fixed;
 
-  let goal_button = this.goal_buttons_by_id[goal_id];
-  goal_button.className = "btn btn-outline-primary btn-lg btn-block active " +
-    "no-gutters";
-  goal_button.setAttribute("aria-pressed", true);
+  if(goal_id in this.goal_buttons_by_id) {
+    let goal_button = this.goal_buttons_by_id[goal_id];
+    goal_button.className = "btn btn-outline-primary btn-lg btn-block active " +
+      "no-gutters";
+    goal_button.setAttribute("aria-pressed", true);
+  }
+
   this.resize_goals_table();
 };
 
@@ -1603,6 +1644,11 @@ Home_Tab.prototype.is_goal_in_filter = function(goal, ignore_depth) {
     ignore_depth = false;
   }
 
+  // Always show active goals at top of status
+  if(goal.is_active) {
+    return true;
+  }
+
   if(goal.completed_on !== null || goal.abandoned_on !== null) {
     return false;
   }
@@ -1666,7 +1712,9 @@ Home_Tab.prototype.parent_filters_changed = function() {
 
   this.filter_goal_ids = $("#parent_goal_filter_select").val();
 
-  this.update_goals_table();
+  console.log("parent_filters_changed");
+
+  this.render_goals_table();
 };
 
 Home_Tab.prototype.complete_clicked = function() {
@@ -1751,7 +1799,18 @@ Home_Tab.prototype.close_notes_button_clicked = function() {
 };
 
 Home_Tab.prototype.save_notes_clicked = function() {
-  $("#notes_modal").modal("hide");
+
+  // If the current goal id is null, we are creating a new goal
+  if(this.current_goal_id !== null) {
+
+    let current_goal = this.goal_id_map[this.current_goal_id];
+    current_goal.notes = this.notes_field.value;
+
+    this.datastore.update_goal(current_goal._id, current_goal)
+    .then(function() {
+      $("#notes_modal").modal("hide");
+    }.bind(this));
+  }
 };
 
 Home_Tab.prototype.set_organized_clicked = function() {
@@ -1787,7 +1846,7 @@ Home_Tab.prototype.set_organized_clicked = function() {
     promises.push(
       this.datastore.update_goal(goal._id, goal)
       .then(function(goal) {
-        return this.update_goal_button(goal);
+        return this.render_goal_button(goal);
       }.bind(this)));
   }
 

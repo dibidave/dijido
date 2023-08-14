@@ -96,7 +96,7 @@ Connector.prototype.get_goals = function() {
 
 Connector.prototype.get_incomplete_goals = function() {
 
-  var URL = this.base_URL + "/goals?completed_on=null";
+  var URL = this.base_URL + "/goals?completed_on=null&abandoned_on=null";
 
   var promise = get_URL(URL)
     .then(function(response) {
