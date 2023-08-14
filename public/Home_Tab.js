@@ -16,7 +16,7 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
   this.grid_header_row.id = "home_header";
 
   this.current_goal_div = document.createElement("div");
-  this.current_goal_div.className = "col-sm-6  border";
+  this.current_goal_div.className = "col-sm-6 border";
 
   // The current goal id field
   this.current_goal_id_row = document.createElement("div");
@@ -44,11 +44,12 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
 
   this.current_goal_div.appendChild(this.current_goal_id_row);
 
+  // The goal search field
   this.goal_search_row = document.createElement("div");
-  this.goal_search_row.className = "pb-1 row";
+  this.goal_search_row.className = "row justify-content-center";
 
   this.goal_search_label = document.createElement("label");
-  this.goal_search_label.className = "label label-default col-sm-3";
+  this.goal_search_label.className = "pr-1";
   this.goal_search_label.innerHTML = "Search Goals";
   this.goal_search_row.appendChild(this.goal_search_label);
 
@@ -58,8 +59,6 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
 
   this.goal_search_row.appendChild(this.goal_search_dropdown);
   this.current_goal_div.appendChild(this.goal_search_row);
-
-  // The goal search field
 
   // The current goal name field
   this.current_goal_name_row = document.createElement("div");
@@ -1483,10 +1482,13 @@ Home_Tab.prototype.goal_clicked = function(goal_id) {
 
   this.recurrence_fixed_checkbox.checked = current_goal.is_recurrence_fixed;
 
-  let goal_button = this.goal_buttons_by_id[goal_id];
-  goal_button.className = "btn btn-outline-primary btn-lg btn-block active " +
-    "no-gutters";
-  goal_button.setAttribute("aria-pressed", true);
+  if(goal_id in this.goal_buttons_by_id) {
+    let goal_button = this.goal_buttons_by_id[goal_id];
+    goal_button.className = "btn btn-outline-primary btn-lg btn-block active " +
+      "no-gutters";
+    goal_button.setAttribute("aria-pressed", true);
+  }
+  
   this.resize_goals_table();
 };
 
