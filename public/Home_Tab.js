@@ -255,7 +255,7 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
   this.set_active_button.className = "btn btn-primary";
   this.set_active_button.innerHTML = "Set Active";
   this.set_active_button.addEventListener(
-    "click", this.set_active_clicked.bind(this, false));
+    "click", this.set_active_clicked.bind(this, false, false));
 
   this.current_goal_buttons_row.appendChild(this.set_active_button);
   
@@ -263,7 +263,7 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
   this.set_active_exclusive_button.className = "btn btn-primary";
   this.set_active_exclusive_button.innerHTML = "Set Active Exclusive";
   this.set_active_exclusive_button.addEventListener(
-    "click", this.set_active_clicked.bind(this, true));
+    "click", this.set_active_clicked.bind(this, true, false));
 
   this.current_goal_buttons_row.appendChild(this.set_active_exclusive_button);
   
@@ -1067,7 +1067,7 @@ Home_Tab.prototype.cancel_delete_clicked = function() {
 
 };
 
-Home_Tab.prototype.set_active_clicked = async function(is_exclusive, complete_current=false) {
+Home_Tab.prototype.set_active_clicked = async function(is_exclusive, complete_current) {
 
   console.log("set active clicked async");
 
@@ -1128,7 +1128,7 @@ Home_Tab.prototype.set_active_clicked = async function(is_exclusive, complete_cu
         activity.end_time = transition_time;
         await this.datastore.update_activity(activity._id, activity);
 
-        if(complete_current) {
+        if(complete_current === true) {
           active_goal.completed_on = transition_time;
         }
 
