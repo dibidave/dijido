@@ -627,11 +627,8 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
         this.resize_goals_table.bind(this)
       );
       $("#goal_search_select").on("change", function() {
-
         const goal_id = $("#goal_search_select").val();
-        console.log(goal_id);
-        console.log("searched");
-        this.goal_clicked(goal_id);
+        this.goal_selected(goal_id);
       }.bind(this));
       this.resize_goals_table();
       $(window).resize(function() {
@@ -1389,8 +1386,10 @@ Home_Tab.prototype.render_goals_table = function() {
 };
 
 Home_Tab.prototype.goal_clicked = function(goal_id) {
+  $("#goal_search_select").val(goal_id).trigger("change");
+}
 
-  $("#goal_search_select").val(goal_id);
+Home_Tab.prototype.goal_selected = function(goal_id) {
 
   if(this.current_goal_id !== null) {
 
