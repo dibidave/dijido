@@ -46,15 +46,15 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
 
   // The goal search field
   this.goal_search_row = document.createElement("div");
-  this.goal_search_row.className = "row justify-content-center";
+  this.goal_search_row.className = "pb-1 row";
 
   this.goal_search_label = document.createElement("label");
-  this.goal_search_label.className = "pr-1";
+  this.goal_search_label.className = "label label-default col-sm-3";
   this.goal_search_label.innerHTML = "Search Goals";
   this.goal_search_row.appendChild(this.goal_search_label);
 
   this.goal_search_dropdown = document.createElement("select")
-  this.goal_search_dropdown.className = "js-example-basic";
+  this.goal_search_dropdown.className = "js-example-basic col-sm-9";
   this.goal_search_dropdown.id = "goal_search_select";
 
   this.goal_search_row.appendChild(this.goal_search_dropdown);
@@ -1488,7 +1488,7 @@ Home_Tab.prototype.goal_clicked = function(goal_id) {
       "no-gutters";
     goal_button.setAttribute("aria-pressed", true);
   }
-  
+
   this.resize_goals_table();
 };
 
