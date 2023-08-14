@@ -794,6 +794,7 @@ Home_Tab.prototype.update_goals = function() {
 
       option = new Option(goal.name, goal._id, false, false);
       $("#parent_goal_filter_select").append(option);
+      option = new Option(goal.name, goal._id, false, false);
       $("#goal_search_select").append(option);
     }
 
