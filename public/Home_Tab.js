@@ -1749,7 +1749,18 @@ Home_Tab.prototype.close_notes_button_clicked = function() {
 };
 
 Home_Tab.prototype.save_notes_clicked = function() {
-  $("#notes_modal").modal("hide");
+
+  // If the current goal id is null, we are creating a new goal
+  if(this.current_goal_id !== null) {
+
+    let current_goal = this.goal_id_map[this.current_goal_id];
+    current_goal.notes = this.notes_field.value;
+
+    this.datastore.update_goal(current_goal._id, current_goal)
+    .then(function() {
+      $("#notes_modal").modal("hide");
+    }.bind(this));
+  }
 };
 
 Home_Tab.prototype.set_organized_clicked = function() {
