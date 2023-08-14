@@ -250,6 +250,14 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
     "click", this.set_active_clicked.bind(this, true));
 
   this.current_goal_buttons_row.appendChild(this.set_active_exclusive_button);
+  
+  this.complete_set_active_button = document.createElement("button");
+  this.complete_set_active_button.className = "btn btn-primary";
+  this.complete_set_active_button.innerHTML = "Complete and Set Active";
+  this.complete_set_active_button.addEventListener(
+    "click", this.set_active_clicked.bind(this, true, true));
+
+  this.current_goal_buttons_row.appendChild(this.complete_set_active_button);
 
   this.notes_button = document.createElement("button");
   this.notes_button.className = "btn btn-primary";
@@ -1031,7 +1039,7 @@ Home_Tab.prototype.cancel_delete_clicked = function() {
 
 };
 
-Home_Tab.prototype.set_active_clicked = async function(is_exclusive) {
+Home_Tab.prototype.set_active_clicked = async function(is_exclusive, complete_current=false) {
 
   console.log("set active clicked async");
 
@@ -1091,7 +1099,12 @@ Home_Tab.prototype.set_active_clicked = async function(is_exclusive) {
         let activity = activities[0];
         activity.end_time = transition_time;
         await this.datastore.update_activity(activity._id, activity);
-        await this.datastore.update_goal(active_goal._id, active_goal)
+
+        if(complete_current) {
+          active_goal.completed_on = transition_time;
+        }
+
+        await this.datastore.update_goal(active_goal._id, active_goal);
         await this.render_goal_button(active_goal);
       }
     }
