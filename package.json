@@ -24,7 +24,7 @@
     "jquery": "^3.6.3",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
-    "mongodb": "^3.7.3",
+    "mongodb": "^3.7.4",
     "npm": "^9.4.1",
     "passport": "^0.6.0",
     "passport-local": "^1.0.0",
