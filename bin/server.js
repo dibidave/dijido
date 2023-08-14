@@ -33,6 +33,7 @@ database.connect()
   }
 
   if(use_HTTPS) {
+    logger.info("Using HTTPS");
     var HTTPS_options = {
       key: private_key,
       cert: certificate
