@@ -1200,10 +1200,20 @@ Home_Tab.prototype.render_goal_button = function(goal) {
   let goal_name_div = document.createElement("div");
 
   if(goal._id in this.parent_goal_id_set) {
-    goal_name_div.className = "col-10 no-gutters";
+    if(goal.is_impeccable) {
+      goal_name_div.className = "col-8 no-gutters";
+    }
+    else {
+      goal_name_div.className = "col-10 no-gutters";
+    }
   }
   else {
-    goal_name_div.className = "col-12 no-gutters";
+    if(goal.is_impeccable) {
+      goal_name_div.className = "col-10 no-gutters";
+    }
+    else {
+      goal_name_div.className = "col-12 no-gutters";
+    }
   }
 
   if(goal._id === this.current_goal_id) {
