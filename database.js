@@ -14,7 +14,7 @@ module.exports["connect"] = function() {
   });
 };
 
-const DATABASE_VERSION = 7;
+const DATABASE_VERSION = 8;
 
 var initialize_database = function() {
   return Promise.resolve();
@@ -93,6 +93,17 @@ var upgrade_database_v_6 = function() {
   );
 };
 
+var upgrade_database_v_7 = function() {
+
+  return database.update_many(Goal.collection_name, {},
+    {
+      $set: {
+        "is_impeccable": false
+      }
+    }
+  );
+};
+
 
 const VERSION_UPGRADE_MAP = {
   0: initialize_database,
@@ -101,5 +112,6 @@ const VERSION_UPGRADE_MAP = {
   3: upgrade_database_v_3,
   4: upgrade_database_v_4,
   5: upgrade_database_v_5,
-  6: upgrade_database_v_6
+  6: upgrade_database_v_6,
+  7: upgrade_database_v_7
 };

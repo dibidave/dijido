@@ -38,6 +38,7 @@ var post_goal = function(request, response) {
       var new_subgoal_JSON = {};
       new_subgoal_JSON.name = goal.name;
       new_subgoal_JSON.parent_goal_ids = [goal._id];
+      new_subgoal_JSON.is_impeccable = goal.is_impeccable;
 
       var target_date = moment().clone();
       new_subgoal_JSON.target_date = target_date.toDate();
@@ -295,6 +296,7 @@ var update_goal = function(request, response) {
         // completed goal
         var new_goal_JSON = {};
         new_goal_JSON.name = updated_goal.name;
+        new_goal_JSON.is_impeccable = updated_goal.is_impeccable;
         new_goal_JSON.parent_goal_ids = updated_goal.parent_goal_ids;
 
         var target_date = null;

@@ -1,6 +1,6 @@
 {
   "name": "dijido",
-  "version": "1.1.0",
+  "version": "1.2.0alpha2",
   "description": "Personal objective tracking app server",
   "main": "bin/server.js",
   "bin": {

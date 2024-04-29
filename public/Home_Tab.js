@@ -214,6 +214,28 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
 
   this.recurrence_row.appendChild(this.recurrence_fixed_div);
 
+  this.impeccable_div = document.createElement("div");
+  this.impeccable_div.className = "form-check mx-auto my-auto";
+
+  this.impeccable_checkbox = document.createElement("input");
+  this.impeccable_checkbox.id = "impeccable_checkbox";
+  this.impeccable_checkbox.className = "form-check-input";
+  this.impeccable_checkbox.setAttribute("type", "checkbox");
+  this.impeccable_checkbox.checked = false;
+
+  this.impeccable_div
+    .appendChild(this.impeccable_checkbox);
+
+  this.impeccable_label = document.createElement("label");
+  this.impeccable_label.innerHTML = "Is Impeccable";
+  this.impeccable_label.className = "form-check-label";
+  this.impeccable_label.setAttribute("for", "impeccable_checkbox");
+
+  this.impeccable_div
+    .appendChild(this.impeccable_label);
+
+  this.recurrence_row.appendChild(this.impeccable_div);
+
   this.current_goal_div.appendChild(this.recurrence_row);
 
   // Buttons for saving/canceling the current goal
@@ -779,7 +801,6 @@ Home_Tab.prototype.update_goals = function() {
 
       if(goal.is_active) {
         this.active_goal_ids.push(goal._id);
-        console.log(goal.name + " is active");
       }
 
       if(goal.completed_on !== null || goal.abandoned_on !== null) {
@@ -998,6 +1019,7 @@ Home_Tab.prototype.save_current = function() {
     new_goal.recurrence_time_unit = recurrence_time_unit;
     new_goal.recurrence_rate = recurrence_rate;
     new_goal.is_recurrence_fixed = this.recurrence_fixed_checkbox.checked;
+    new_goal.is_impeccable = this.impeccable_checkbox.checked;
     new_goal.is_organized = true;
 
     return this.datastore.add_goal(new_goal)
@@ -1021,6 +1043,7 @@ Home_Tab.prototype.save_current = function() {
     current_goal.recurrence_time_unit = recurrence_time_unit;
     current_goal.recurrence_rate = recurrence_rate;
     current_goal.is_recurrence_fixed = this.recurrence_fixed_checkbox.checked;
+    current_goal.is_impeccable = this.impeccable_checkbox.checked;
     current_goal.is_organized = true;
 
     return this.datastore.update_goal(current_goal._id, current_goal)
@@ -1212,6 +1235,21 @@ Home_Tab.prototype.render_goal_button = function(goal) {
     "click", this.goal_clicked.bind(this, goal._id));
 
   goal_container.appendChild(goal_name_div);
+
+  if(goal.is_impeccable) {
+
+    let goal_impeccable_button_div = document.createElement("div");
+    goal_impeccable_button_div.className = "col-2 no-gutters";
+
+    let goal_impeccable_button = document.createElement("img");
+    goal_impeccable_button.src = "images/noun-quail-4879550.svg";
+    goal_impeccable_button.className = "no-gutters";
+    goal_impeccable_button.setAttribute("width", "100%");
+
+    goal_impeccable_button_div.appendChild(goal_impeccable_button);
+
+    goal_container.appendChild(goal_impeccable_button_div);
+  }
 
   if(goal._id in this.parent_goal_id_set) {
 
@@ -1481,6 +1519,7 @@ Home_Tab.prototype.goal_selected = function(goal_id) {
   $("#parent_goals_select").val(current_goal.parent_goal_ids).trigger("change");
 
   this.recurrence_fixed_checkbox.checked = current_goal.is_recurrence_fixed;
+  this.impeccable_checkbox.checked = current_goal.is_impeccable;
 
   if(goal_id in this.goal_buttons_by_id) {
     let goal_button = this.goal_buttons_by_id[goal_id];
