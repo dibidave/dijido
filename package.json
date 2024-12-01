@@ -34,7 +34,6 @@
     "shelljs": "^0.8.5",
     "sqit": "git+ssh://git@github.com/dibidave/node-sqit.git"
   },
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

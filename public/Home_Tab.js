@@ -454,7 +454,7 @@ function Home_Tab(tab_header_div, tab_content_div, datastore) {
   this.hide_non_leaf_checkbox.id = "hide_non_leaf_checkbox";
   this.hide_non_leaf_checkbox.className = "form-check-input";
   this.hide_non_leaf_checkbox.setAttribute("type", "checkbox");
-  this.hide_non_leaf_checkbox.checked = true;
+  this.hide_non_leaf_checkbox.checked = false;
   this.hide_non_leaf_checkbox.addEventListener("click",
     this.parent_filters_changed.bind(this));
 
