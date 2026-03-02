@@ -314,9 +314,21 @@ var update_goal = function(request, response) {
             time_unit = "day";
           }
 
-          target_date.add(
-            parent_goal.recurrence_rate, time_unit
-          );
+          if(parent_goal.recurrence_time_unit === "wakinghour") {
+            let count = 0;
+            while(count < parent_goal.recurrence_rate) {
+              target_date.add(1, "hour");
+              let hour = target_date.hour();
+              if(hour >= 9 && hour < 23) {
+                count++;
+              }
+            }
+          }
+          else {
+            target_date.add(
+              parent_goal.recurrence_rate, time_unit
+            );
+          }
 
           if(parent_goal.recurrence_time_unit === "workday") {
             while(target_date.isoWeekday() > 5) {
@@ -351,8 +363,20 @@ var update_goal = function(request, response) {
               time_unit = "day";
             }
 
-            target_date.add(
-              parent_goal.recurrence_rate, time_unit);
+            if(parent_goal.recurrence_time_unit === "wakinghour") {
+              let count = 0;
+              while(count < parent_goal.recurrence_rate) {
+                target_date.add(1, "hour");
+                let hour = target_date.hour();
+                if(hour >= 9 && hour < 23) {
+                  count++;
+                }
+              }
+            }
+            else {
+              target_date.add(
+                parent_goal.recurrence_rate, time_unit);
+            }
 
             if(parent_goal.recurrence_time_unit === "workday") {
               while(target_date.isoWeekday() > 5) {
