@@ -298,6 +298,8 @@ var update_goal = function(request, response) {
         new_goal_JSON.name = updated_goal.name;
         new_goal_JSON.is_impeccable = updated_goal.is_impeccable;
         new_goal_JSON.parent_goal_ids = updated_goal.parent_goal_ids;
+        new_goal_JSON.notes = updated_goal.hasOwnProperty("notes") ?
+          updated_goal.notes : goal.notes;
 
         var target_date = null;
 
